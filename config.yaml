@@ -1,0 +1,22 @@
+
+server:
+  ip: 0.0.0.0
+  port: 8080
+
+database:
+  dialect: "postgres"
+  port: 54320
+  dbuser: "postgres"
+  dbpassword: "postgres"
+  dbname: "ia_text"
+  sslmode: "disable"
+
+cache:
+  maxidle: 80
+  maxactive: 12000
+  network: "tcp"
+  ip: "localhost"
+  port: 6379
+
+InitDatabase: true
+EXAMPLE_PATH: "path from config.yml"

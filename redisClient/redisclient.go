@@ -3,6 +3,7 @@ package redisClient
 import (
 	"fmt"
 	"github.com/gomodule/redigo/redis"
+	c "github.com/sm-playground/go-text-poc/config"
 	"log"
 	"os"
 	"strings"
@@ -10,9 +11,9 @@ import (
 
 var pool *redis.Pool
 
-func InitRedis() {
+func InitCache(config c.Configurations) {
 	// init redis connection pool
-	initPool()
+	initPool(config)
 
 	// bootstramp some data to redis
 	initStore()
@@ -78,12 +79,12 @@ func initStore() {
 	}
 }
 
-func initPool() {
+func initPool(config c.Configurations) {
 	pool = &redis.Pool{
-		MaxIdle:   80,
-		MaxActive: 12000,
+		MaxIdle:   config.Cache.MaxIdle,
+		MaxActive: config.Cache.MaxActive,
 		Dial: func() (redis.Conn, error) {
-			conn, err := redis.Dial("tcp", "localhost:6379")
+			conn, err := redis.Dial(config.Cache.Network, fmt.Sprintf("%s:%d", config.Cache.IP, config.Cache.Port))
 			if err != nil {
 				log.Printf("ERROR: fail init redis: %s", err.Error())
 				os.Exit(1)
