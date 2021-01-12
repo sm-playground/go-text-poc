@@ -11,7 +11,7 @@ The docker cheat sheet is available here -> https://dockerlabs.collabnix.com/doc
 docker run --rm -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=ia_text --name my-postgres -p 54320:5432 postgres
 
 -- The following command will create a postgres docker container preserving the data locally   
-docker run --rm -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=ia_text --name my-postgres -p 54320:5432  -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data postgres
+docker run --rm -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=ia_text --name my-postgres -p 54320:5432 -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data postgres
 
 
 --rm instucts to remove container after it exists.  
