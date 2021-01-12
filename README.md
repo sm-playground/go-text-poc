@@ -17,7 +17,7 @@ docker run --rm -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTG
 --rm instucts to remove container after it exists.  
 POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB are environment variables specifying parameters of the postgres instance.  
 my-postgres is the name of the container  
--p 54320:5432 - connects the port 5432 inside Docker as port 54320 on the host machine. 
+-p 54320:5432 - connects the port 5432 inside Docker as port 54320 on the host machine.   
 -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data postgres - all the data is stored and kept in local folder $HOME/docker/volumes/postgres.   
 
 3. Run psql - an interactive terminal to work with the postgres database.  
