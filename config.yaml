@@ -10,13 +10,16 @@ database:
   dbpassword: "postgres"
   dbname: "ia_text"
   sslmode: "disable"
+  dbcp:
+    maxidle: 20
+    maxactive: 200
 
 cache:
-  maxidle: 80
-  maxactive: 12000
   network: "tcp"
   ip: "localhost"
-  port: 6379
+  port: 63790
+  dbcp:
+    maxidle: 80
+    maxactive: 12000
 
-InitDatabase: true
-EXAMPLE_PATH: "path from config.yml"
+InitDatabase: false

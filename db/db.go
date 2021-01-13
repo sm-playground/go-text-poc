@@ -41,10 +41,12 @@ func InitDatabase(config c.Configurations) (db *gorm.DB) {
 		config.Database.DBPassword)
 
 	db, err = gorm.Open(config.Database.Dialect, dbConnect)
-
 	if err != nil {
 		panic("failed to connect database")
 	}
+
+	db.DB().SetMaxIdleConns(config.Database.DBCP.MaxIdle)
+	db.DB().SetMaxOpenConns(config.Database.DBCP.MaxActive)
 
 	// set the log mode to see the queries executed by the gorm
 	db.LogMode(true)

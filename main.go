@@ -33,6 +33,7 @@ func main() {
 
 	// Initialize the database and populate with the sample data
 	dbClient = db.InitDatabase(config)
+
 	defer dbClient.Close()
 
 	// Initialize redis connection pool
@@ -44,15 +45,18 @@ func main() {
 
 	fmt.Println(hello, err)
 
-	router := mux.NewRouter()
+	// router := mux.NewRouter()
+	// router.HandleFunc("/textInfo", GetTextInfo).Methods("GET")
 
-	router.HandleFunc("/textInfo", GetTextInfo).Methods("GET")
-	router.HandleFunc("/textInfo/{id}", GetSingleTextInfo).Methods("GET")
-	router.HandleFunc("/textInfo", CreateTextInfo).Methods("POST")
-	router.HandleFunc("/textInfo/{id}", UpdateTextInfo).Methods("PUT")
-	router.HandleFunc("/textInfo/{id}", DeleteTextInfo).Methods("DELETE")
+	subrouter := mux.NewRouter().PathPrefix("/v1").Subrouter()
+	subrouter.HandleFunc("/textInfo", GetTextInfo).Methods("GET")
 
-	handler := cors.Default().Handler(router)
+	subrouter.HandleFunc("/textInfo/{id}", GetSingleTextInfo).Methods("GET")
+	subrouter.HandleFunc("/textInfo", CreateTextInfo).Methods("POST")
+	subrouter.HandleFunc("/textInfo/{id}", UpdateTextInfo).Methods("PUT")
+	subrouter.HandleFunc("/textInfo/{id}", DeleteTextInfo).Methods("DELETE")
+
+	handler := cors.Default().Handler(subrouter)
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", config.Server.IP, config.Server.Port), handler))
 }

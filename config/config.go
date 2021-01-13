@@ -24,14 +24,19 @@ type DatabaseConfiguration struct {
 	DBPassword string
 	DBName     string
 	SSLMode    string
+	DBCP       DBConnectionPool
+}
+
+type DBConnectionPool struct {
+	MaxIdle   int
+	MaxActive int
 }
 
 type CacheConfiguration struct {
-	MaxIdle   int
-	MaxActive int
-	Network   string
-	IP        string
-	Port      int
+	Network string
+	IP      string
+	Port    int
+	DBCP    DBConnectionPool
 }
 
 // Loads the application configuration parameters from the yaml file
@@ -46,7 +51,9 @@ func LoadConfig() (configuration Configurations) {
 		fmt.Printf("Error reading config file, %s", err)
 	}
 
-	viper.Unmarshal(&configuration)
+	if err := viper.Unmarshal(&configuration); err != nil {
+		fmt.Printf("Error unmarshalling config file, %s", err)
+	}
 
 	return configuration
 }

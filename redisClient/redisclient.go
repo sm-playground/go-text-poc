@@ -22,6 +22,7 @@ func InitCache(config c.Configurations) {
 func Get(key string) (string, error) {
 	// get conn and put back when exit from method
 	conn := pool.Get()
+
 	defer conn.Close()
 
 	s, err := redis.String(conn.Do("GET", key))
@@ -81,8 +82,8 @@ func initStore() {
 
 func initPool(config c.Configurations) {
 	pool = &redis.Pool{
-		MaxIdle:   config.Cache.MaxIdle,
-		MaxActive: config.Cache.MaxActive,
+		MaxIdle:   config.Cache.DBCP.MaxIdle,
+		MaxActive: config.Cache.DBCP.MaxActive,
 		Dial: func() (redis.Conn, error) {
 			conn, err := redis.Dial(config.Cache.Network, fmt.Sprintf("%s:%d", config.Cache.IP, config.Cache.Port))
 			if err != nil {
