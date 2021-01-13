@@ -34,12 +34,16 @@ func main() {
 	// Initialize the database and populate with the sample data
 	dbClient = db.InitDatabase(config)
 
-	defer dbClient.Close()
+	defer func() {
+		if err := dbClient.Close(); err != nil {
+			log.Printf("ERROR!!! - failed to close DB connection")
+		}
+	}()
 
 	// Initialize redis connection pool
 	redisClient.InitCache(config)
 
-	redisClient.Set("hello", "hello world")
+	err = redisClient.Set("hello", "hello world")
 
 	var hello, err = redisClient.Get("hello")
 
@@ -48,15 +52,15 @@ func main() {
 	// router := mux.NewRouter()
 	// router.HandleFunc("/textInfo", GetTextInfo).Methods("GET")
 
-	subrouter := mux.NewRouter().PathPrefix("/v1").Subrouter()
-	subrouter.HandleFunc("/textInfo", GetTextInfo).Methods("GET")
+	router := mux.NewRouter().PathPrefix("/v1").Subrouter()
+	router.HandleFunc("/textInfo", GetTextInfo).Methods("GET")
 
-	subrouter.HandleFunc("/textInfo/{id}", GetSingleTextInfo).Methods("GET")
-	subrouter.HandleFunc("/textInfo", CreateTextInfo).Methods("POST")
-	subrouter.HandleFunc("/textInfo/{id}", UpdateTextInfo).Methods("PUT")
-	subrouter.HandleFunc("/textInfo/{id}", DeleteTextInfo).Methods("DELETE")
+	router.HandleFunc("/textInfo/{id}", GetSingleTextInfo).Methods("GET")
+	router.HandleFunc("/textInfo", CreateTextInfo).Methods("POST")
+	router.HandleFunc("/textInfo/{id}", UpdateTextInfo).Methods("PUT")
+	router.HandleFunc("/textInfo/{id}", DeleteTextInfo).Methods("DELETE")
 
-	handler := cors.Default().Handler(subrouter)
+	handler := cors.Default().Handler(router)
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", config.Server.IP, config.Server.Port), handler))
 }
@@ -111,7 +115,9 @@ func GetTextInfo(w http.ResponseWriter, r *http.Request) {
 		dbClient.Find(&textInfoList)
 	}
 
-	json.NewEncoder(w).Encode(&textInfoList)
+	if json.NewEncoder(w).Encode(&textInfoList) != nil {
+		log.Printf("ERROR!!! - failed encoding the query response")
+	}
 }
 
 // GetSingleTextInfo returns the single record from the text_info table
@@ -123,9 +129,13 @@ func GetSingleTextInfo(w http.ResponseWriter, r *http.Request) {
 		var requestStatus RequestStatus
 		requestStatus.Status = "failed"
 		requestStatus.Message = fmt.Sprintf("The record with id=%s is not found", params["id"])
-		json.NewEncoder(w).Encode(&requestStatus)
+		if json.NewEncoder(w).Encode(&requestStatus) != nil {
+			log.Printf("ERROR!!! - failed encoding the query response")
+		}
 	} else {
-		json.NewEncoder(w).Encode(&textInfo)
+		if json.NewEncoder(w).Encode(&textInfo) != nil {
+			log.Printf("ERROR!!! - failed encoding the query response")
+		}
 	}
 }
 
@@ -134,7 +144,7 @@ func DeleteTextInfo(w http.ResponseWriter, r *http.Request) {
 	var requestStatus RequestStatus
 
 	params := mux.Vars(r)
-	var deletedRecordId string = params["id"]
+	var deletedRecordId = params["id"]
 	var textInfo m.TextInfo
 	if dbClient.First(&textInfo, deletedRecordId).RecordNotFound() {
 		requestStatus.Status = "failed"
@@ -145,7 +155,9 @@ func DeleteTextInfo(w http.ResponseWriter, r *http.Request) {
 		requestStatus.Message = fmt.Sprintf("The record with id=%s was deleted", deletedRecordId)
 	}
 
-	json.NewEncoder(w).Encode(&requestStatus)
+	if json.NewEncoder(w).Encode(&requestStatus) != nil {
+		log.Printf("ERROR!!! - failed encoding the query response")
+	}
 }
 
 // CreateTextInfo Creates a single record in the text_info table
@@ -160,7 +172,9 @@ func CreateTextInfo(w http.ResponseWriter, r *http.Request) {
 
 	dbClient.Create(&textInfo)
 
-	json.NewEncoder(w).Encode(&textInfo)
+	if json.NewEncoder(w).Encode(&textInfo) != nil {
+		log.Printf("ERROR!!! - failed encoding the query response")
+	}
 }
 
 // UpdateTextInfo updates the record in the text_info table. ALL fields are updated
@@ -173,7 +187,9 @@ func UpdateTextInfo(w http.ResponseWriter, r *http.Request) {
 		var requestStatus RequestStatus
 		requestStatus.Status = "failed"
 		requestStatus.Message = fmt.Sprintf("The record with id=%s is not found", id)
-		json.NewEncoder(w).Encode(&requestStatus)
+		if json.NewEncoder(w).Encode(&requestStatus) != nil {
+			log.Printf("ERROR!!! - failed encoding the query response")
+		}
 	} else {
 		err = json.NewDecoder(r.Body).Decode(&textInfo)
 
@@ -182,7 +198,9 @@ func UpdateTextInfo(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		dbClient.Save(&textInfo)
-		json.NewEncoder(w).Encode(&textInfo)
+		if json.NewEncoder(w).Encode(&textInfo) != nil {
+			log.Printf("ERROR!!! - failed encoding the query response")
+		}
 	}
 
 }

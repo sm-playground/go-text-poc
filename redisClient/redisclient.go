@@ -15,15 +15,21 @@ func InitCache(config c.Configurations) {
 	// init redis connection pool
 	initPool(config)
 
-	// bootstramp some data to redis
+	// bootstrap some data to redis
 	initStore()
+}
+
+// Returns redis connection.
+func returnConnection(conn redis.Conn) {
+	if err := conn.Close(); err != nil {
+		log.Printf("ERROR!!! - failed to close redis connection")
+	}
 }
 
 func Get(key string) (string, error) {
 	// get conn and put back when exit from method
 	conn := pool.Get()
-
-	defer conn.Close()
+	defer returnConnection(conn)
 
 	s, err := redis.String(conn.Do("GET", key))
 	if err != nil {
@@ -37,7 +43,7 @@ func Get(key string) (string, error) {
 func Set(key string, val string) error {
 	// get conn and put back when exit from method
 	conn := pool.Get()
-	defer conn.Close()
+	defer returnConnection(conn)
 
 	_, err := conn.Do("SET", key, val)
 	if err != nil {
@@ -50,7 +56,7 @@ func Set(key string, val string) error {
 
 func Delete(key string) error {
 	conn := pool.Get()
-	defer conn.Close()
+	defer returnConnection(conn)
 
 	_, err := conn.Do("DEL", key)
 	if err != nil {
@@ -65,18 +71,18 @@ func Delete(key string) error {
 func initStore() {
 	// get conn and put back when exit from method
 	conn := pool.Get()
-	defer conn.Close()
+	defer returnConnection(conn)
 
-	macs := []string{"00000C  Cisco", "00000D  FIBRONICS", "00000E  Fujitsu",
+	macs := []string{"00000C  Cisco", "00000D  GOOGLE", "00000E  Fujitsu",
 		"00000F  Next", "000010  Hughes"}
 	for _, mac := range macs {
 		pair := strings.Split(mac, "  ")
-		Set(pair[0], pair[1])
+		err := Set(pair[0], pair[1])
 
 		val, err := Get(pair[0])
 		fmt.Println(val, err)
 
-		Delete(pair[0])
+		err = Delete(pair[0])
 	}
 }
 
