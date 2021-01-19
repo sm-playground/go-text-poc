@@ -9,18 +9,24 @@ import (
 
 var (
 	textInfo = []m.TextInfo{
-		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE", Text: "Record type", Action: "View", Country: "US", Locale: "en", ReadOnly: true},
-		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.RECORDTYPE", Text: "Record type", Action: "Edit", Country: "US", Locale: "en", ReadOnly: false},
-		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.ENTITY", Text: "Customer entity", Action: "View", Country: "US", Locale: "en", ReadOnly: true},
-		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.ENTITY", Text: "Customer entity", Action: "Edit", Country: "US", Locale: "en", ReadOnly: false},
-		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.CUSTOMERNAME", Text: "Customer name", Action: "View", Country: "US", Locale: "en", ReadOnly: true},
-		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.CUSTOMERNAME", Text: "Customer name", Action: "Edit", Country: "US", Locale: "en", ReadOnly: false},
-		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE", Text: "Record type", Action: "View", Country: "CA", Locale: "en", ReadOnly: true},
-		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE", Text: "Type d'enregistrement", Action: "View", Country: "CA", Locale: "fr", ReadOnly: true},
-		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.CUSTOMERNAME", Text: "Customer name", Action: "View", Country: "CA", Locale: "en", ReadOnly: true},
-		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.CUSTOMERNAME", Text: "Nom du client", Action: "View", Country: "CA", Locale: "fr", ReadOnly: true},
-		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.CUSTOMERNAME", Text: "ომხმარებლის სახელი", Action: "View", Country: "GE", Locale: "ge", ReadOnly: true},
-		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.CUSTOMERNAME", Text: "Հաճախորդի անունը", Action: "View", Country: "AM", Locale: "am", ReadOnly: true},
+		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE", Text: "Record type", Action: "View", Country: "US", Locale: "en", ReadOnly: true, TargetId: "123456"},
+		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.RECORDTYPE", Text: "Record type", Action: "Edit", Country: "US", Locale: "en", ReadOnly: false, TargetId: "123456"},
+		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.ENTITY", Text: "Customer entity", Action: "View", Country: "US", Locale: "en", ReadOnly: true, TargetId: "123456"},
+		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.ENTITY", Text: "Customer entity", Action: "Edit", Country: "US", Locale: "en", ReadOnly: false, TargetId: "123456"},
+		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.CUSTOMERNAME", Text: "Customer name", Action: "View", Country: "US", Locale: "en", ReadOnly: true, TargetId: "123456"},
+		{Token: "IA.AR.ARINVOICE.VIEW.HELP.CUSTOMERNAME", Text: "This is a help text for Customer name field", Action: "View", Country: "US", Locale: "en", ReadOnly: true, TargetId: "123456"},
+		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.CUSTOMERNAME", Text: "Customer name", Action: "Edit", Country: "US", Locale: "en", ReadOnly: false, TargetId: "123456"},
+		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE", Text: "Record type", Action: "View", Country: "CA", Locale: "en", ReadOnly: true, TargetId: "123456"},
+		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE", Text: "Type d'enregistrement", Action: "View", Country: "CA", Locale: "fr", ReadOnly: true, TargetId: "123456"},
+		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.CUSTOMERNAME", Text: "Customer name", Action: "View", Country: "CA", Locale: "en", ReadOnly: true, TargetId: "123456"},
+		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.CUSTOMERNAME", Text: "Nom du client", Action: "View", Country: "CA", Locale: "fr", ReadOnly: true, TargetId: "123456"},
+		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.CUSTOMERNAME", Text: "ომხმარებლის სახელი", Action: "View", Country: "GE", Locale: "ge", ReadOnly: true, TargetId: "123456"},
+		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.CUSTOMERNAME", Text: "Հաճախորդի անունը", Action: "View", Country: "AM", Locale: "am", ReadOnly: true, TargetId: "123456"},
+
+		{Token: "US.PLACEHOLDER.COUNT.FOUR", Text: "The {TOTAL} of {PAYMENT} for {PRODUCT} is {AMOUNT}", Action: "Info", Country: "US", Locale: "en", ReadOnly: true, TargetId: "123456"},
+		{Token: "US.PLACEHOLDER.COUNT.ONE", Text: "The life is just {LIFE_DESCRIPTION}", Action: "Info", Country: "US", Locale: "en", ReadOnly: true, TargetId: "123456"},
+		{Token: "US.PLACEHOLDER.COUNT.TWO", Text: "Mr. {LEADER}, tear down this {STRUCTURE}", Action: "Info", Country: "US", Locale: "en", ReadOnly: true, TargetId: "123456"},
+
 		// {Token: "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE", Text: "Գրանցման տեսակը", Action: "View", Country: "AM", Locale: "am", ReadOnly: true},
 	}
 )

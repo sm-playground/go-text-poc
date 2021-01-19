@@ -1,0 +1,168 @@
+# This file contains the list of helpful requests
+
+# Queries two tokens, one with two placeholders and another one with no placeholder
+{
+    "targetId": "123456",
+    "locale": "en",
+    "country": "US",
+    "format": {
+        "date": "yyyy-MM-dd",
+        "time": "yyyy-MM-dd HH:mm:ss",
+        "number": "#,###.##",
+        "currency": "#,###.##",
+        "currencySymbol": "$"
+    },
+    "tokens": [
+        {
+            "token": "US.PLACEHOLDER.COUNT.TWO",
+            "placeholders": [
+                {
+                    "name": "LEADER",
+                    "value": "Gorbachov"
+                },
+                {
+                    "name": "STRUCTURE",
+                    "value": "wall"
+                }
+            ]
+        },
+        {
+            "token": "IA.AR.ARINVOICE.VIEW.LABEL.CUSTOMERNAME"
+        }
+    ]
+}
+
+# The same query as above but without placeholders. Will return the text as is
+{
+    "targetId": "123456",
+    "locale": "en",
+    "country": "US",
+    "format": {
+        "date": "yyyy-MM-dd",
+        "time": "yyyy-MM-dd HH:mm:ss",
+        "number": "#,###.##",
+        "currency": "#,###.##",
+        "currencySymbol": "$"
+    },
+    "tokens": [
+        {
+            "token": "US.PLACEHOLDER.COUNT.TWO"
+        },
+        {
+            "token": "IA.AR.ARINVOICE.VIEW.LABEL.CUSTOMERNAME"
+        }
+    ]
+}
+
+# Query for a single token
+{
+    "targetId": "123456",
+    "locale": "en",
+    "country": "US",
+    "format": {
+        "date": "yyyy-MM-dd",
+        "time": "yyyy-MM-dd HH:mm:ss",
+        "number": "#,###.##",
+        "currency": "#,###.##",
+        "currencySymbol": "$"
+    },
+    "tokens": [
+        {
+            "token": "IA.AR.ARINVOICE.VIEW.LABEL.CUSTOMERNAME"
+        }
+    ]
+}
+
+# Query for all labels in the view mode for a specific page
+{
+    "targetId": "123456",
+    "locale": "en",
+    "country": "US",
+    "format": {
+        "date": "yyyy-MM-dd",
+        "time": "yyyy-MM-dd HH:mm:ss",
+        "number": "#,###.##",
+        "currency": "#,###.##",
+        "currencySymbol": "$"
+    },
+    "tokens": [
+        {
+            "token": "IA.AR.ARINVOICE.VIEW.LABEL"
+        }
+    ]
+}
+
+# Query for all texts in the view mode specified for a specific page
+{
+    "targetId": "123456",
+    "locale": "en",
+    "country": "US",
+    "format": {
+        "date": "yyyy-MM-dd",
+        "time": "yyyy-MM-dd HH:mm:ss",
+        "number": "#,###.##",
+        "currency": "#,###.##",
+        "currencySymbol": "$"
+    },
+    "tokens": [
+        {
+            "token": "IA.AR.ARINVOICE.VIEW"
+        }
+    ]
+}
+
+# Query returning all localized texts specified for a page
+{
+    "targetId": "123456",
+    "locale": "en",
+    "country": "US",
+    "format": {
+        "date": "yyyy-MM-dd",
+        "time": "yyyy-MM-dd HH:mm:ss",
+        "number": "#,###.##",
+        "currency": "#,###.##",
+        "currencySymbol": "$"
+    },
+    "tokens": [
+        {
+            "token": "IA.AR.ARINVOICE"
+        }
+    ]
+}
+
+# Creating the new record with placeholders
+  and querying it with parameters
+{
+    "token": "IA.AR.ARINVOICE.VIEW.HELP.RECORDTYPE",
+    "text": "The only supported record types are {TYPE_ONE}, {TYPE_TWO}, and {TYPE_THREE} ",
+    "action": "Help",
+    "country": "US",
+    "locale": "en",
+    "readOnly": true,
+    "targetId": "123456"
+}
+##
+{
+    "targetId": "123456",
+    "locale": "en",
+    "country": "US",
+    "tokens": [
+        {
+            "token": "IA.AR.ARINVOICE.VIEW.HELP.RECORDTYPE",
+            "placeholders": [
+                {
+                    "name": "TYPE_ONE",
+                    "value": "'hidden'"
+                },
+                {
+                    "name": "TYPE_TWO",
+                    "value": "'read-only'"
+                },
+                {
+                    "name": "TYPE_THREE",
+                    "value": "'disabled'"
+                }
+            ]
+        }
+    ]
+}
