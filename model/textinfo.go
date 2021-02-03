@@ -2,9 +2,9 @@ package model
 
 type TextInfo struct {
 	// gorm.Model
-	Id         int    `gorm:"primary_key";"AUTO_INCREMENT"`
-	Token      string `gorm:"type:varchar(100)"`
-	Text       string `gorm:"type:varchar(2000)"`
+	Id         int    `gorm:"autoIncrement:true" json:"id"`
+	Token      string `gorm:"type:varchar(100)" json:"token"`
+	Text       string `gorm:"type:varchar(2000)" json:"text"`
 	TargetId   string `json:"targetId"`
 	SourceId   string `json:"sourceId"`
 	Language   string `json:"language"`
@@ -15,7 +15,7 @@ type TextInfo struct {
 	IsReadOnly bool   `gorm:"column:read_only" json:"readOnly"`
 	IsFallback bool   `gorm:"column:is_fallback" json:"fallBack"`
 
-	Temp string `gorm:"<-:false"`
+	Temp string `gorm:"<-:false" json:"-"`
 
 	Noun        string `json:"noun"`
 	Function    string `json:"function"`

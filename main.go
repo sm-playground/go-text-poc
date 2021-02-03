@@ -24,6 +24,7 @@ func main() {
 	dbClient = db.InitDatabase(config)
 
 	defer func() {
+		fmt.Println("\nClose DB connection")
 		if err := dbClient.Close(); err != nil {
 			log.Printf("ERROR!!! - failed to close DB connection")
 		}
