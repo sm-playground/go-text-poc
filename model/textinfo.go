@@ -5,16 +5,23 @@ type TextInfo struct {
 	Id         int    `gorm:"primary_key";"AUTO_INCREMENT"`
 	Token      string `gorm:"type:varchar(100)"`
 	Text       string `gorm:"type:varchar(2000)"`
-	Noun       string `json:"noun"`
-	Function   string `json:"function"`
-	Action     string `json:"action";gorm:"size:30"`
-	Module     string `json:"module"`
-	Country    string `json:"country"`
-	Locale     string `json:"locale"`
-	SourceType string `json:"sourceType"`
-	SourceId   string `json:"sourceiId"`
 	TargetId   string `json:"targetId"`
-	ReadOnly   bool   `json:"readOnly"`
+	SourceId   string `json:"sourceId"`
+	Language   string `json:"language"`
+	Country    string `json:"country"`
+	Locale     string `gorm:"-" json:"-"`
+	Action     string `gorm:"size:30" json:"action"`
+	SourceType string `json:"sourceType"`
+	IsReadOnly bool   `gorm:"column:read_only" json:"readOnly"`
+	IsFallback bool   `gorm:"column:is_fallback" json:"fallBack"`
+
+	Temp string `gorm:"<-:false"`
+
+	Noun        string `json:"noun"`
+	Function    string `json:"function"`
+	Verb        string `json:"verb"`
+	Application string `json:"application"`
+	Module      string `json:"module"`
 }
 
 type TokenText struct {
@@ -25,7 +32,9 @@ type TokenText struct {
 
 type TextInfoPayload struct {
 	TargetId       string             `json:"targetId"`
+	SourceId       string             `json:"sourceId"`
 	Locale         string             `json:"locale"`
+	Language       string             `json:"language"`
 	Country        string             `json:"country"`
 	ResponseFormat TextResponseFormat `json:"format"`
 	Tokens         []TokenPayload     `json:"tokens"`

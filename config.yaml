@@ -18,8 +18,10 @@ cache:
   network: "tcp"
   ip: "localhost"
   port: 63790
-  dbcp:
+  pool:
     maxidle: 80
     maxactive: 12000
 
 InitDatabase: false
+DefaultLocale: en-US
+ServiceOwnerSourceId: IA

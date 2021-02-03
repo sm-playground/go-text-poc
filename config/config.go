@@ -3,13 +3,18 @@ package config
 import (
 	"fmt"
 	"github.com/spf13/viper"
+	"strings"
 )
 
 type Configurations struct {
-	Server       ServerConfiguration
-	Database     DatabaseConfiguration
-	Cache        CacheConfiguration
-	InitDatabase bool
+	Server               ServerConfiguration
+	Database             DatabaseConfiguration
+	Cache                CacheConfiguration
+	InitDatabase         bool
+	DefaultLocale        string
+	DefaultCountry       string
+	DefaultLanguage      string
+	ServiceOwnerSourceId string
 }
 
 type ServerConfiguration struct {
@@ -36,7 +41,7 @@ type CacheConfiguration struct {
 	Network string
 	IP      string
 	Port    int
-	DBCP    DBConnectionPool
+	Pool    DBConnectionPool
 }
 
 // Loads the application configuration parameters from the yaml file
@@ -54,6 +59,16 @@ func LoadConfig() (configuration Configurations) {
 	if err := viper.Unmarshal(&configuration); err != nil {
 		fmt.Printf("Error unmarshalling config file, %s", err)
 	}
+
+	l := strings.Split(configuration.DefaultLocale, "-")
+
+	if len(l) != 2 {
+		// the locale is expected in the format of "en-US"
+		// Ignore all other cases
+		panic("incorrect format for locale: " + fmt.Sprintf("%+v", configuration.DefaultLocale))
+	}
+	configuration.DefaultLanguage = strings.TrimSpace(l[0])
+	configuration.DefaultCountry = strings.TrimSpace(l[1])
 
 	return configuration
 }

@@ -88,8 +88,8 @@ func initStore() {
 
 func initPool(config c.Configurations) {
 	pool = &redis.Pool{
-		MaxIdle:   config.Cache.DBCP.MaxIdle,
-		MaxActive: config.Cache.DBCP.MaxActive,
+		MaxIdle:   config.Cache.Pool.MaxIdle,
+		MaxActive: config.Cache.Pool.MaxActive,
 		Dial: func() (redis.Conn, error) {
 			conn, err := redis.Dial(config.Cache.Network, fmt.Sprintf("%s:%d", config.Cache.IP, config.Cache.Port))
 			if err != nil {

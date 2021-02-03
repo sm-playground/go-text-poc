@@ -1,17 +1,14 @@
 package router
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
 	cm "github.com/sm-playground/go-text-poc/common"
 	c "github.com/sm-playground/go-text-poc/config"
-	"github.com/sm-playground/go-text-poc/model"
 	s "github.com/sm-playground/go-text-poc/service"
 	"github.com/urfave/negroni"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
@@ -33,45 +30,53 @@ type PostRequestHandler struct{}
 func (*PostRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	t := time.Now()
 
-	r2 := r.Clone(r.Context())
-	*r2 = *r
+	/*
+		r2 := r.Clone(r.Context())
+		*r2 = *r
 
-	var b bytes.Buffer
-	_, err := b.ReadFrom(r.Body)
-	if err != nil {
-		log.Printf("ERROR!!! - failed reading the request body")
-		return
-	}
-
-	r.Body = ioutil.NopCloser(&b)
-	r2.Body = ioutil.NopCloser(bytes.NewReader(b.Bytes()))
-
-	var textInfo model.TextInfo
-
-	if json.NewDecoder(r.Body).Decode(&textInfo) != nil {
-		// Got request with method other than POST
-		fmt.Printf("Received request with method - %s. Move forward to serve the request", r.Method)
-		next.ServeHTTP(w, r2)
-	} else {
-		if textInfo.Token != "" {
-			fmt.Printf("POST request received with textInfo valid payload. Redirect to CreateTextInfo")
-			CreateTextInfo(w, textInfo)
-		} else {
-			// Received the request with the POST method to retrieve the data according to payload.
-			// Move forward to ReadTextInfo
-			fmt.Printf("Received request with method - %s. Move forward to ReadTextInfo", r.Method)
-			next.ServeHTTP(w, r2)
+		var b bytes.Buffer
+		_, err := b.ReadFrom(r.Body)
+		if err != nil {
+			log.Printf("ERROR!!! - failed reading the request body")
+			return
 		}
-	}
+
+		r.Body = ioutil.NopCloser(&b)
+		r2.Body = ioutil.NopCloser(bytes.NewReader(b.Bytes()))
+
+		var textInfo model.TextInfo
+
+		if json.NewDecoder(r.Body).Decode(&textInfo) != nil {
+			// Got request with method other than POST
+			fmt.Printf("Received request with method - %s. Move forward to serve the request", r.Method)
+			next.ServeHTTP(w, r2)
+		} else {
+			if textInfo.Token != "" {
+				fmt.Printf("POST request received with textInfo valid payload. Redirect to CreateTextInfo")
+				CreateTextInfo(w, textInfo)
+			} else {
+				// Received the request with the POST method to retrieve the data according to payload.
+				// Move forward to ReadTextInfo
+				fmt.Printf("Received request with method - %s. Move forward to ReadTextInfo", r.Method)
+				next.ServeHTTP(w, r2)
+			}
+		}
+	*/
+
+	// Forward to the request handler
+	next.ServeHTTP(w, r)
 
 	fmt.Printf("Execution time: %s \n", time.Now().Sub(t).String())
 }
 
 var db *gorm.DB
+var conf c.Configurations
 
 // Initializes all supported routers
 func InitRouter(config c.Configurations, dbClient *gorm.DB) {
+	conf = config
 	db = dbClient
+
 	router := mux.NewRouter().PathPrefix("/v1").Subrouter()
 
 	router.HandleFunc("/textInfo", GetTextInfo).Methods("GET")
@@ -82,7 +87,11 @@ func InitRouter(config c.Configurations, dbClient *gorm.DB) {
 
 	router.HandleFunc("/textInfo/{id}", UpdateTextInfo).Methods("PUT")
 
-	router.HandleFunc("/textInfo", ReadTextInfo).Methods("POST")
+	// router.HandleFunc("/textInfo", ReadTextInfo).Methods("POST")
+
+	router.HandleFunc("/textInfo", CreateTextInfo).Methods("POST")
+
+	router.HandleFunc("/textInfo/query", ReadTextInfo).Methods("POST")
 
 	n := negroni.New()
 	n.Use(&PostRequestHandler{})
@@ -159,9 +168,9 @@ func UpdateTextInfo(w http.ResponseWriter, r *http.Request) {
 // CreateTextInfo POST method handler
 //
 // Wraps a call to the processing service to create a single record in the text_info table
-func CreateTextInfo(w http.ResponseWriter, textInfo model.TextInfo) {
+func CreateTextInfo(w http.ResponseWriter, r *http.Request) {
 
-	err := s.CreateTextInfo(textInfo, db)
+	var textInfo, err = s.CreateTextInfo(r, db, conf)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -175,8 +184,12 @@ func CreateTextInfo(w http.ResponseWriter, textInfo model.TextInfo) {
 	}
 }
 
+// ReadTextInfo POST method handler
+//
+// Wraps a call to the query service to read the records from the database for the
+// query payload provided in the body of the request
 func ReadTextInfo(w http.ResponseWriter, r *http.Request) {
-	var tokenTextList, err = s.ReadData(r, db)
+	var tokenTextList, err = s.ReadData(r, db, conf)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
