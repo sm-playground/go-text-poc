@@ -1,11 +1,11 @@
-# go-text-poc - REST API with Golang, Mux, Postges (gorm), and Redis with connection pool
+# go-text-poc - REST API with Golang, Mux, Postgres (gorm), and Redis with connection pool
 
 Demonstrates golang REST API implementation connecting to the Postgres database using gorm (ORM).
 
 The docker cheat sheet is available here -> https://dockerlabs.collabnix.com/docker/cheatsheet/
 
 1. Go and Docker are installed and configured.
-2. To create a docker container running an instance of PostgeSql run the command below:  
+2. To create a docker container running an instance of PostgreSql run the command below:  
 
 -- This command will create the the postgres container with no data.  
 docker run --rm -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=ia_text --name my-postgres -p 54320:5432 postgres
