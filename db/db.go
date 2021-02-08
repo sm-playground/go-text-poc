@@ -10,21 +10,24 @@ import (
 var (
 	textInfo = []m.TextInfo{
 		// fallback records
-		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.DUE_IN_DAYS", Text: "Due in", TargetId: "", SourceId: "", Language: "en", Country: "US", Action: "Edit", IsReadOnly: true, IsFallback: true},
-		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.DUE_IN_DAYS", Text: "Dû en jours", TargetId: "", SourceId: "", Language: "fr", Country: "FR", Action: "Edit", IsReadOnly: true, IsFallback: true},
-		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE", Text: "Record type", TargetId: "", SourceId: "", Language: "en", Country: "US", Action: "View", IsReadOnly: true, IsFallback: true},
-		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE", Text: "Type d'enregistrement", TargetId: "", SourceId: "", Language: "fr", Country: "FR", Action: "View", IsReadOnly: true, IsFallback: true},
-		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.RECORDTYPE", Text: "Edit Type d'enregistrement", TargetId: "", SourceId: "", Language: "fr", Country: "FR", Action: "Edit", IsReadOnly: true, IsFallback: true},
-		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE", Text: "Tipo de registro", TargetId: "", SourceId: "", Language: "es", Country: "MX", Action: "View", IsReadOnly: true, IsFallback: true},
-		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.RECORDTYPE", Text: "EDIT Tipo de registro", TargetId: "", SourceId: "", Language: "es", Country: "MX", Action: "View", IsReadOnly: true, IsFallback: true},
+		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.DUE_IN_DAYS", Text: "Due in", TargetId: "", SourceId: "", Language: "en", Country: "", Action: "Edit", IsReadOnly: true, IsFallback: true},
+		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.DUE_IN_DAYS", Text: "Dû en jours", TargetId: "", SourceId: "", Language: "fr", Country: "", Action: "Edit", IsReadOnly: true, IsFallback: true},
+
+		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE", Text: "Record type", TargetId: "", SourceId: "", Language: "en", Country: "", Action: "View", IsReadOnly: true, IsFallback: true},
+		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE", Text: "Type d'enregistrement", TargetId: "", SourceId: "", Language: "fr", Country: "", Action: "View", IsReadOnly: true, IsFallback: true},
+		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE", Text: "Tipo de registro", TargetId: "", SourceId: "", Language: "es", Country: "", Action: "View", IsReadOnly: true, IsFallback: true},
+
+		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.RECORDTYPE", Text: "Record type", TargetId: "", SourceId: "", Language: "en", Country: "", Action: "Edit", IsReadOnly: true, IsFallback: true},
+		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.RECORDTYPE", Text: "Edit Type d'enregistrement", TargetId: "", SourceId: "", Language: "fr", Country: "", Action: "Edit", IsReadOnly: true, IsFallback: true},
+		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.RECORDTYPE", Text: "EDIT Tipo de registro", TargetId: "", SourceId: "", Language: "es", Country: "", Action: "View", IsReadOnly: true, IsFallback: true},
+
 		// fallback - English only
-		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.RECORDTYPE", Text: "Record type", TargetId: "", SourceId: "", Language: "en", Country: "US", Action: "Edit", IsReadOnly: true, IsFallback: true},
-		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.ENTITY", Text: "Customer entity", TargetId: "", SourceId: "", Language: "en", Country: "US", Action: "Edit", IsReadOnly: true, IsFallback: true},
-		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.CUSTOMERNAME", Text: "Customer name", TargetId: "", SourceId: "", Language: "en", Country: "US", Action: "Edit", IsReadOnly: true, IsFallback: true},
-		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.DELIVERY_OPTIONS", Text: "Customer delivery options", TargetId: "", SourceId: "", Language: "en", Country: "US", Action: "Edit", IsReadOnly: true, IsFallback: true},
-		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.DOC_NUMBER", Text: "Document number", TargetId: "", SourceId: "", Language: "en", Country: "US", Action: "Edit", IsReadOnly: true, IsFallback: true},
+		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.ENTITY", Text: "Customer entity", TargetId: "", SourceId: "", Language: "en", Country: "", Action: "Edit", IsReadOnly: true, IsFallback: true},
+		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.CUSTOMERNAME", Text: "Customer name", TargetId: "", SourceId: "", Language: "en", Country: "", Action: "Edit", IsReadOnly: true, IsFallback: true},
+		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.DELIVERY_OPTIONS", Text: "Customer delivery options", TargetId: "", SourceId: "", Language: "en", Country: "", Action: "Edit", IsReadOnly: true, IsFallback: true},
+		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.DOC_NUMBER", Text: "Document number", TargetId: "", SourceId: "", Language: "en", Country: "", Action: "Edit", IsReadOnly: true, IsFallback: true},
 		// fallback parametrized
-		{Token: "IA.AR.ARINVOICE.EDIT.HELP.RECORDTYPE", Text: "Help message for {RECORD_TYPE}", TargetId: "", SourceId: "", Language: "en", Country: "US", Action: "Edit", IsReadOnly: true, IsFallback: true},
+		{Token: "IA.AR.ARINVOICE.EDIT.HELP.RECORDTYPE", Text: "Help message for {RECORD_TYPE}", TargetId: "", SourceId: "", Language: "en", Country: "", Action: "Edit", IsReadOnly: true, IsFallback: true},
 
 		// localized records
 		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.DUE_IN_DAYS", Text: "Localized Due in days", TargetId: "", SourceId: "", Language: "en", Country: "US", Action: "Edit", IsReadOnly: false, IsFallback: false},
@@ -51,14 +54,16 @@ var (
 		// customized parametrized
 		{Token: "IA.AR.ARINVOICE.EDIT.HELP.RECORDTYPE", Text: "Customized message for {RECORD_TYPE}", TargetId: "123456", SourceId: "PRT-001", Language: "en", Country: "US", Action: "Edit", IsReadOnly: true, IsFallback: false},
 
-		// Customized records without fallback records
+		// Customized records without localized records for country but with fallback for language
 		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.CUSTOMERNAME", Text: "en_CA Customer name", TargetId: "123456", SourceId: "PRT-001", Action: "Edit", Country: "CA", Language: "en", IsReadOnly: false, IsFallback: false},
+		// country -> CA, no localized
+		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE", Text: "en_CA View record type", TargetId: "123456", SourceId: "PRT-001", Action: "View", Country: "CA", Language: "en", IsReadOnly: true, IsFallback: false},
+		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE", Text: "fr_CA Type d'enregistrement", TargetId: "123456", SourceId: "PRT-001", Action: "View", Country: "CA", Language: "fr", IsReadOnly: true, IsFallback: false},
+
+		// Customized records without localized AND fallbackrecords
 		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.CUSTOMERNAME", Text: "fr_CA CNom du client", TargetId: "123456", SourceId: "PRT-001", Action: "Edit", Country: "CA", Language: "fr", IsReadOnly: false, IsFallback: false},
 		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.CUSTOMERNAME", Text: "ge_GE ომხმარებლის სახელი", TargetId: "123456", SourceId: "PRT-001", Action: "Edit", Country: "GE", Language: "ge", IsReadOnly: false, IsFallback: false},
 		{Token: "IA.AR.ARINVOICE.EDIT.LABEL.CUSTOMERNAME", Text: "am_AM Հաճախորդի անունը", TargetId: "123456", SourceId: "PRT-001", Action: "Edit", Country: "AM", Language: "am", IsReadOnly: false, IsFallback: false},
-		//
-		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE", Text: "en_CA View record type", TargetId: "123456", SourceId: "PRT-001", Action: "View", Country: "CA", Language: "en", IsReadOnly: true, IsFallback: false},
-		{Token: "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE", Text: "fr_CA Type d'enregistrement", TargetId: "123456", SourceId: "PRT-001", Action: "View", Country: "CA", Language: "fr", IsReadOnly: true, IsFallback: false},
 
 		//
 		{Token: "US.PLACEHOLDER.COUNT.FOUR", Text: "The {TOTAL} of {PAYMENT} for {PRODUCT} is {AMOUNT}", Action: "Info", Country: "US", Language: "en", IsReadOnly: true, TargetId: "123456", IsFallback: false},

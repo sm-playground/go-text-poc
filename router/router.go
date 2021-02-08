@@ -85,13 +85,18 @@ func InitRouter(config c.Configurations, dbClient *gorm.DB) {
 
 	router.HandleFunc("/textInfo/{id}", DeleteTextInfo).Methods("DELETE")
 
-	router.HandleFunc("/textInfo/{id}", UpdateTextInfo).Methods("PUT")
+	router.HandleFunc("/textInfo/{id}", OverwriteTextInfo).Methods("PUT")
+
+	router.HandleFunc("/textInfo/{id}", UpdateTextInfo).Methods("PATCH")
 
 	// router.HandleFunc("/textInfo", ReadTextInfo).Methods("POST")
 
 	router.HandleFunc("/textInfo", CreateTextInfo).Methods("POST")
 
 	router.HandleFunc("/textInfo/query", ReadTextInfo).Methods("POST")
+
+	// batch create
+	router.HandleFunc("/textInfo/batch", BatchCreate).Methods("POST")
 
 	n := negroni.New()
 	n.Use(&PostRequestHandler{})
@@ -150,10 +155,25 @@ func DeleteTextInfo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// UpdateTextInfo updates the record in the text_info table. ALL fields are updated
+// UpdateTextInfo updates the record in the text_info table. Only specified fields are updated
 func UpdateTextInfo(w http.ResponseWriter, r *http.Request) {
 
 	textInfo, err := s.UpdateTextInfo(r, db)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if json.NewEncoder(w).Encode(&textInfo) != nil {
+		log.Printf("ERROR!!! - failed encoding the query response")
+	}
+}
+
+// OverwriteTextInfo overwrites the record in the text_info table. ALL fields are updated
+func OverwriteTextInfo(w http.ResponseWriter, r *http.Request) {
+
+	textInfo, err := s.OverwriteTextInfo(r, db)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -197,6 +217,22 @@ func ReadTextInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if json.NewEncoder(w).Encode(&tokenTextList) != nil {
+		log.Printf("ERROR!!! - failed encoding the query response")
+	}
+}
+
+// BatchCreate POST method handler
+//
+// Wraps a call to the query service to create multiple records in the text_info table
+// for the collection of objects in the JSON format
+func BatchCreate(w http.ResponseWriter, r *http.Request) {
+	response, err := s.BatchCreate(r, db, conf)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if json.NewEncoder(w).Encode(&response) != nil {
 		log.Printf("ERROR!!! - failed encoding the query response")
 	}
 }

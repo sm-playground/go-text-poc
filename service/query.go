@@ -65,13 +65,18 @@ func GetTextInfo(r *http.Request, db *gorm.DB) (textInfoList []m.TextInfo) {
 				continue
 			}
 
+			language := strings.TrimSpace(l[0])
+			country := strings.TrimSpace(l[1])
+
+			// Query all the records with matching language and country
+			// OR only language if the country IS NULL
 			if query == "" {
-				query = "(language = ? and country = ?)"
+				query = "((language = ? and country = ?) or (language = ? and country = ''))"
 			} else {
-				query += " or (language = ? and country = ?)"
+				query += " or ((language = ? and country = ?) or (language = ? and country = ''))"
 
 			}
-			values = append(values, strings.TrimSpace(l[0]), strings.TrimSpace(l[1]))
+			values = append(values, language, country, language)
 		}
 
 		query = "(" + query + ")"
@@ -171,7 +176,7 @@ func getSubquery(queryInput SingleQueryInput, subqueryOrderKey SubqueryOrderKey,
 
 	queryFrom := "FROM text_info "
 
-	queryWhere := "WHERE token like ?  and language = ? and country = ? "
+	queryWhere := "WHERE token like ? "
 
 	// bind order key
 	subqueryValues = append(subqueryValues, subqueryOrderKey)
@@ -183,26 +188,30 @@ func getSubquery(queryInput SingleQueryInput, subqueryOrderKey SubqueryOrderKey,
 
 	switch subqueryOrderKey {
 	case Customized:
+		// Include language and country unconditionally
+		queryWhere += " and language = ? and country = ? "
 		subqueryValues = append(subqueryValues, queryInput.Language, queryInput.Country)
 		if queryInput.TargetId != "" {
+			// include the target Id in the request if provided
 			queryWhere += " and target_id = ? "
 			subqueryValues = append(subqueryValues, queryInput.TargetId)
 		}
 		break
 
 	case Localized:
-		queryWhere += " and source_id = ? and NOT is_fallback"
+		// Include language and country in the query for all NON-FALLBACK records
+		queryWhere += " and language = ? and country = ?  and source_id = ? and NOT is_fallback"
 		subqueryValues = append(subqueryValues, queryInput.Language, queryInput.Country, queryInput.ServiceOwnerSourceId)
 		break
 
 	case FallbackLocale:
-		queryWhere += " and source_id = ? and is_fallback"
-		subqueryValues = append(subqueryValues, queryInput.Language, queryInput.Country, queryInput.ServiceOwnerSourceId)
+		queryWhere += " and language = ? and source_id = ? and is_fallback"
+		subqueryValues = append(subqueryValues, queryInput.Language, queryInput.ServiceOwnerSourceId)
 		break
 
 	case FallbackDefault:
-		queryWhere += " and source_id = ? and is_fallback"
-		subqueryValues = append(subqueryValues, queryInput.DefaultLanguage, queryInput.DefaultCountry, queryInput.ServiceOwnerSourceId)
+		queryWhere += " and language = ? and source_id = ? and is_fallback"
+		subqueryValues = append(subqueryValues, queryInput.DefaultLanguage, queryInput.ServiceOwnerSourceId)
 		break
 
 	default:
@@ -228,10 +237,13 @@ func resolveSingleToken(db *gorm.DB, tokenInfo m.TokenPayload, queryInput Single
 
 	resolvedPlaceholder := resolvePlaceholders(tokenInfo)
 
-	query, queryValues = getSubquery(queryInput, Customized, token, resolvedPlaceholder)
+	if queryInput.TargetId != "" {
+		query, queryValues = getSubquery(queryInput, Customized, token, resolvedPlaceholder)
+		query += " UNION "
+	}
 
 	s, v := getSubquery(queryInput, Localized, token, resolvedPlaceholder)
-	query += " UNION " + s
+	query += s
 	queryValues = append(queryValues, v...)
 
 	if queryInput.Country != queryInput.DefaultCountry || queryInput.Language != queryInput.DefaultLanguage {
@@ -244,6 +256,8 @@ func resolveSingleToken(db *gorm.DB, tokenInfo m.TokenPayload, queryInput Single
 	s, v = getSubquery(queryInput, FallbackDefault, token, resolvedPlaceholder)
 	query += " UNION " + s
 	queryValues = append(queryValues, v...)
+
+	query += " ORDER BY orderkey"
 
 	db.Raw(query, queryValues...).Scan(&textInfo)
 

@@ -1,0 +1,64 @@
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+URL -> http://localhost:8080/v1/textInfo
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# Creates a new fallback record in German
+{
+    "token": "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE",
+    "text": "Der Datensatztyp",
+    "action": "View",
+    "country": "DE",
+    "language": "de",
+    "readOnly": true
+}
+
+# Creates a new localized record in German
+{
+    "token": "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE",
+    "text": "Localized Der Datensatztyp",
+    "action": "View",
+    "country": "DE",
+    "language": "de",
+    "fallBack": false   # fallback is false, hence localized
+}
+
+# Creates a new customized record in German
+{
+    "token": "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE",
+    "text": "de_DE Customized Der Datensatztyp",
+    "action": "View",
+    "country": "DE",
+    "language": "de",
+    "fallBack": false,
+    "readOnly": false,
+    "targetId": "123456",
+    "sourceId": "PRT-002"
+}
+# Creates a new customized record in Swiss German
+{
+    "token": "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE",
+    "text": "de_CH Customized Der Datensatztyp",
+    "action": "View",
+    "country": "CH",
+    "language": "de",
+    "fallBack": false,
+    "targetId": "123456",
+    "sourceId": "PRT-002"
+}
+# Update a record - DO NOT FORGET TO SET THE ID IN URL
+{
+    "Token": "IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE",
+    "Text": "de_CH Customized Der Datensatztyp updated",
+    "targetId": "123456",
+    "sourceId": "PRT-002",
+    "language": "de",
+    "country": "CH",
+    "action": "View",
+    "sourceType": "",
+    "readOnly": false,
+    "fallBack": false,
+    "noun": "",
+    "function": "",
+    "verb": "",
+    "application": "",
+    "module": "AR"
+}

@@ -1,5 +1,10 @@
 package model
 
+import (
+	"fmt"
+	"reflect"
+)
+
 type TextInfo struct {
 	// gorm.Model
 	Id         int    `gorm:"autoIncrement:true" json:"id"`
@@ -22,6 +27,19 @@ type TextInfo struct {
 	Verb        string `json:"verb"`
 	Application string `json:"application"`
 	Module      string `json:"module"`
+}
+
+// Overwrite overwrites all fields of the object with the values from the method input object
+func (ti *TextInfo) Overwrite(textInfo TextInfo) {
+	// myValue := reflect.ValueOf(ti)
+	newObjectValue := reflect.ValueOf(textInfo)
+	numberOfFields := newObjectValue.NumField()
+	for i := 0; i < numberOfFields; i++ {
+		fmt.Printf("%d.Type:%T || Value:%#v\n",
+			(i + 1), newObjectValue.Field(i), newObjectValue.Field(i))
+
+		fmt.Println("Kind is ", newObjectValue.Field(i).Kind())
+	}
 }
 
 type TokenText struct {

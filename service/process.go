@@ -45,33 +45,37 @@ func CreateTextInfo(r *http.Request, db *gorm.DB, config cnf.Configurations) (te
 		textInfo.SourceId = config.ServiceOwnerSourceId
 	}
 
-	var count int64
-	db.Model(&m.TextInfo{}).
-		Where("token = ? AND language = ? AND is_fallback", textInfo.Token, textInfo.Language).
-		Count(&count)
-	if count == 0 {
-		// No fallback is found for the token / locale.
-		// Make it a fallback record and set the service owner source Id
-		textInfo.IsFallback = true
-	} else {
-		if textInfo.IsFallback {
-			// error condition. the default record is already in the database and
-			// the user tries to insert another default
-			return textInfo, errors.New("the fallback record is already in the database and tries to insert another one")
-		}
-	}
-
-	if textInfo.Token != "" {
-		db.Create(&textInfo)
-	} else {
-		err = errors.New("no token value found")
-	}
+	err = createTextInfo(&textInfo, db, config)
 
 	return textInfo, err
 }
 
-// UpdateTextInfo updates the record in the text_info table. ALL fields are updated
+// UpdateTextInfo updates the record in the text_info table. Only the fields specified in the request are updated
 func UpdateTextInfo(r *http.Request, db *gorm.DB) (textInfo m.TextInfo, err error) {
+
+	params := mux.Vars(r)
+	var id = params["id"]
+	if db.First(&textInfo, id).RecordNotFound() {
+		err = errors.New(fmt.Sprintf("The record with id=%s is not found", id))
+		return textInfo, err
+	} else {
+		var newPyload m.TextInfo
+
+		err = json.NewDecoder(r.Body).Decode(&newPyload)
+		if err != nil {
+			return textInfo, err
+		}
+
+		textInfo.Overwrite(newPyload)
+
+		db.Save(&textInfo)
+
+		return textInfo, nil
+	}
+}
+
+// OverwriteTextInfo updates the record in the text_info table. ALL fields are updated
+func OverwriteTextInfo(r *http.Request, db *gorm.DB) (textInfo m.TextInfo, err error) {
 
 	params := mux.Vars(r)
 	var id = params["id"]
@@ -88,5 +92,114 @@ func UpdateTextInfo(r *http.Request, db *gorm.DB) (textInfo m.TextInfo, err erro
 
 		return textInfo, nil
 	}
+}
 
+// createTextInfo creates a single record in the text_info table
+// for the textInfo input parameter.
+func createTextInfo(textInfo *m.TextInfo, db *gorm.DB, config cnf.Configurations) (err error) {
+	/*
+		var count int64
+		db.Model(&m.TextInfo{}).
+			Where("token = ? AND language = ? AND is_fallback", textInfo.Token, textInfo.Language).
+			Count(&count)
+		if count == 0 {
+			// No fallback is found for the token / locale.
+			// Make it a fallback record and set the service owner source Id
+			textInfo.IsFallback = true
+		} else {
+			if textInfo.IsFallback {
+				// error condition. the default record is already in the database and
+				// the user tries to insert another default
+				return errors.New("the fallback record is already in the database and tries to insert another one")
+			}
+		}
+	*/
+
+	if textInfo.Token != "" {
+
+		// db.Create(&textInfo)
+		_, err = upsertTextInfo(textInfo, db, config)
+	} else {
+		err = errors.New("no token value found")
+	}
+
+	return err
+}
+
+// - - - - Batch processing functions - - - -
+// BatchCreate addresses the user's request for batch update
+func BatchCreate(r *http.Request, db *gorm.DB, config cnf.Configurations) (processStatus []c.TokenProcessStatus, err error) {
+	var textInfoList []m.TextInfo
+
+	err = json.NewDecoder(r.Body).Decode(&textInfoList)
+
+	if err != nil {
+		return processStatus, err
+	}
+
+	// createTextInfoList, updateTextInfoList := preprocessForCreate(textInfoList, config, db)
+
+	for _, textInfo := range textInfoList {
+
+		ps, _ := upsertTextInfo(&textInfo, db, config)
+		processStatus = append(processStatus, ps)
+
+		/*
+			if textInfo.Language == "" {
+				textInfo.Language = config.DefaultLanguage
+			}
+			if textInfo.Country == "" {
+				textInfo.Language = config.DefaultCountry
+			}
+
+			var count int64
+			db.Model(&m.TextInfo{}).
+				Where("token = ? AND language = ? AND country is NULL AND is_fallback",
+					textInfo.Token, textInfo.Language, textInfo.Country).
+				Count(&count)
+			if count == 0 {
+				// No fallback is found for the token / locale.
+				// Make it a fallback record and set the service owner source Id
+				textInfo.IsFallback = true
+				textInfo.SourceId = config.ServiceOwnerSourceId
+				textInfo.TargetId = ""
+				db.Create(&textInfo)
+				processStatus = append(processStatus, c.TokenProcessStatus{Id: textInfo.Id, Token: textInfo.Token, Status: c.RequestStatus{Status: "created"}})
+			} else {
+				// Fallback is found. Check for the localized record
+				db.Model(&m.TextInfo{}).
+					Where("token = ? AND language = ? AND country = ? AND source_id = ? AND NOT is_fallback",
+						textInfo.Token, textInfo.Language, textInfo.Country, config.ServiceOwnerSourceId).
+					Count(&count)
+				if count == 0 {
+					// no localized version
+					textInfo.IsFallback = false
+					textInfo.SourceId = config.ServiceOwnerSourceId
+					textInfo.TargetId = ""
+					db.Create(&textInfo)
+					processStatus = append(processStatus, c.TokenProcessStatus{Id: textInfo.Id, Token: textInfo.Token, Status: c.RequestStatus{Status: "created"}})
+				} else {
+					// neither fallback nor localized. Check for customized record
+					var tiList []m.TextInfo
+					db.Where("token = ? AND language = ? AND country = ? AND source_id != ? AND target_id = ? AND NOT is_fallback",
+						textInfo.Token, textInfo.Language, textInfo.Country, config.ServiceOwnerSourceId, textInfo.TargetId).Find(&tiList)
+					if len(tiList) > 1 {
+						// TODO ERROR condition.
+					} else if len(tiList) == 0 {
+						// mark as create
+						db.Create(&textInfo)
+						processStatus = append(processStatus, c.TokenProcessStatus{Id: textInfo.Id, Token: textInfo.Token, Status: c.RequestStatus{Status: "created"}})
+					} else {
+						// mark as update
+						textInfo.Id = tiList[0].Id
+						db.Save(&textInfo)
+						processStatus = append(processStatus, c.TokenProcessStatus{Id: textInfo.Id, Token: textInfo.Token, Status: c.RequestStatus{Status: "updated"}})
+					}
+				}
+			}
+		*/
+
+	}
+
+	return processStatus, nil
 }
