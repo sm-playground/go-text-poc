@@ -79,15 +79,16 @@ func InitRouter(config c.Configurations, dbClient *gorm.DB) {
 
 	router := mux.NewRouter().PathPrefix("/v1").Subrouter()
 
+	// regular router
 	router.HandleFunc("/textInfo", GetTextInfo).Methods("GET")
 
-	router.HandleFunc("/textInfo/{id}", GetSingleTextInfo).Methods("GET")
+	router.HandleFunc("/textInfo/{id:[0-9]+}", GetSingleTextInfo).Methods("GET")
 
-	router.HandleFunc("/textInfo/{id}", DeleteTextInfo).Methods("DELETE")
+	router.HandleFunc("/textInfo/{id:[0-9]+}", DeleteTextInfo).Methods("DELETE")
 
-	router.HandleFunc("/textInfo/{id}", OverwriteTextInfo).Methods("PUT")
+	router.HandleFunc("/textInfo/{id:[0-9]+}", OverwriteTextInfo).Methods("PUT")
 
-	router.HandleFunc("/textInfo/{id}", UpdateTextInfo).Methods("PATCH")
+	router.HandleFunc("/textInfo/{id:[0-9]+}", UpdateTextInfo).Methods("PATCH")
 
 	// router.HandleFunc("/textInfo", ReadTextInfo).Methods("POST")
 
@@ -95,8 +96,10 @@ func InitRouter(config c.Configurations, dbClient *gorm.DB) {
 
 	router.HandleFunc("/textInfo/query", ReadTextInfo).Methods("POST")
 
-	// batch create
+	// batch requests
 	router.HandleFunc("/textInfo/batch", BatchCreate).Methods("POST")
+
+	router.HandleFunc("/textInfo/batch", BatchUpdate).Methods("PUT")
 
 	n := negroni.New()
 	n.Use(&PostRequestHandler{})
@@ -221,12 +224,30 @@ func ReadTextInfo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// - - - - - - - Batch processes - - - - - - - -
+
 // BatchCreate POST method handler
 //
 // Wraps a call to the query service to create multiple records in the text_info table
 // for the collection of objects in the JSON format
 func BatchCreate(w http.ResponseWriter, r *http.Request) {
 	response, err := s.BatchCreate(r, db, conf)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if json.NewEncoder(w).Encode(&response) != nil {
+		log.Printf("ERROR!!! - failed encoding the query response")
+	}
+}
+
+// BatchUpdate PUT method handler
+//
+// Wraps a call to the query service to update (overwrite) multiple records in the text_info table
+// for the collection of objects in the JSON format
+func BatchUpdate(w http.ResponseWriter, r *http.Request) {
+	response, err := s.BatchUpdate(r, db)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

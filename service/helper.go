@@ -77,3 +77,36 @@ func upsertTextInfo(textInfo *m.TextInfo, db *gorm.DB, config cnf.Configurations
 
 	return processStatus, err
 }
+
+// updateSingleRecord validates the passed TextInfo object and updates the matching
+// record in the database.
+func updateSingleRecord(textInfo *m.TextInfo, db *gorm.DB) c.TokenProcessStatus {
+	var ps c.TokenProcessStatus
+	if textInfo.Id == 0 {
+		// Error condition. Id is required for update
+		ps = c.TokenProcessStatus{Id: textInfo.Id,
+			Token:  textInfo.Token,
+			Status: c.RequestStatus{Status: "failed", Message: "Id is required for update"}}
+	} else {
+		var ti m.TextInfo
+		if db.First(&ti, textInfo.Id).RecordNotFound() {
+			// Find a record in the database with the given Id
+			ps = c.TokenProcessStatus{Id: textInfo.Id,
+				Token:  textInfo.Token,
+				Status: c.RequestStatus{Status: "failed", Message: fmt.Sprintf("No record with Id -> %d", textInfo.Id)}}
+		} else {
+			if ti.IsReadOnly {
+				ps = c.TokenProcessStatus{Id: textInfo.Id,
+					Token:  textInfo.Token,
+					Status: c.RequestStatus{Status: "failed", Message: "Cannot update read-only field"}}
+			} else {
+				db.Save(&textInfo)
+				ps = c.TokenProcessStatus{Id: textInfo.Id,
+					Token:  textInfo.Token,
+					Status: c.RequestStatus{Status: "updated"}}
+			}
+		}
+	}
+
+	return ps
+}

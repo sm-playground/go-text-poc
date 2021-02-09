@@ -4,55 +4,55 @@ URL -> http://localhost:8080/v1/textInfo/batch
 # Run batch create. All records are added, NO error, NO update
 [
     {
-        "Token": "IA.AR.ARINVOICE.VIEW.LABEL.ABCD.ONE",
-        "Text": "A fallback, Գրանցման տեսակը",
-        "Action": "View",
-        "Country": "AM",
-        "Language": "am",
-        "ReadOnly": true
+        "token": "IA.AR.ARINVOICE.VIEW.LABEL.ABCD.ONE",
+        "text": "A fallback, Գրանցման տեսակը",
+        "action": "View",
+        "country": "AM",
+        "language": "am",
+        "readOnly": true
     },
     {
-        "Token": "IA.AR.ARINVOICE.VIEW.LABEL.ABCD.ONE",
-        "Text": "Localized text - Գրանցման տեսակը",
-        "Action": "View",
-        "Country": "AM",
-        "Language": "am",
-        "ReadOnly": true
+        "token": "IA.AR.ARINVOICE.VIEW.LABEL.ABCD.ONE",
+        "text": "Localized text - Գրանցման տեսակը",
+        "action": "View",
+        "country": "AM",
+        "language": "am",
+        "readOnly": true
     },
     {
-        "Token": "IA.AR.ARINVOICE.VIEW.LABEL.ABCD.ONE",
-        "Text": "Customized text 123456 - Գրանցման տեսակը",
-        "Action": "View",
-        "Country": "AM",
-        "Language": "am",
-        "TargetId": "123456"
+        "token": "IA.AR.ARINVOICE.VIEW.LABEL.ABCD.ONE",
+        "text": "Customized text 123456 - Գրանցման տեսակը",
+        "action": "View",
+        "country": "AM",
+        "language": "am",
+        "targetId": "123456"
     },
     {
-        "Token": "IA.AR.ARINVOICE.VIEW.LABEL.ABCD.ONE",
-        "Text": "Customized text 987654 - Գրանցման տեսակը",
-        "Action": "View",
-        "Country": "AM",
-        "Language": "am",
-        "TargetId": "987654"
+        "token": "IA.AR.ARINVOICE.VIEW.LABEL.ABCD.ONE",
+        "text": "Customized text 987654 - Գրանցման տեսակը",
+        "action": "View",
+        "country": "AM",
+        "language": "am",
+        "targetId": "987654"
     }
 ]
 
 # Run batch create. Two records, one will be created, and the other one has a matching record and will be updated
 [
     {
-        "Token": "IA.AR.ARINVOICE.VIEW.LABEL.ABCD.ONE",
-        "Text": "Customized text 6543 - Գրանցման տեսակը",
-        "Action": "View",
-        "Country": "AM",
-        "Language": "am",
-        "TargetId": "6543"
+        "token": "IA.AR.ARINVOICE.VIEW.LABEL.ABCD.ONE",
+        "text": "Customized text 6543 - Գրանցման տեսակը",
+        "action": "View",
+        "country": "AM",
+        "language": "am",
+        "targetId": "6543"
     },
     {
-        "Token": "IA.AR.ARINVOICE.VIEW.LABEL.ABCD.ONE",
-        "Text": "Updated Customized text 987654 - Գրանցման տեսակը",
-        "Action": "View",
-        "Country": "AM",
-        "Language": "am",
-        "TargetId": "987654"
+        "token": "IA.AR.ARINVOICE.VIEW.LABEL.ABCD.ONE",
+        "text": "Updated Customized text 987654 - Գրանցման տեսակը",
+        "action": "View",
+        "country": "AM",
+        "language": "am",
+        "targetId": "987654"
     }
 ]
