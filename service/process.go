@@ -119,8 +119,6 @@ func BatchCreate(r *http.Request, db *gorm.DB, config cnf.Configurations) (proce
 		return processStatus, err
 	}
 
-	// createTextInfoList, updateTextInfoList := preprocessForCreate(textInfoList, config, db)
-
 	for _, textInfo := range textInfoList {
 
 		ps, err := upsertTextInfo(&textInfo, db, config)
@@ -135,7 +133,7 @@ func BatchCreate(r *http.Request, db *gorm.DB, config cnf.Configurations) (proce
 	return processStatus, nil
 }
 
-// BatchCreate addresses the user's request for batch update
+// BatchUpdate addresses the user's request for batch update
 func BatchUpdate(r *http.Request, db *gorm.DB) (processStatus []c.TokenProcessStatus, err error) {
 	var textInfoList []m.TextInfo
 
@@ -149,6 +147,55 @@ func BatchUpdate(r *http.Request, db *gorm.DB) (processStatus []c.TokenProcessSt
 		ps := updateSingleRecord(&textInfo, db)
 
 		processStatus = append(processStatus, ps)
+	}
+
+	return processStatus, nil
+}
+
+// BatchDelete addresses the user's request for batch delete
+func BatchDelete(r *http.Request, db *gorm.DB) (processStatus []c.TokenProcessStatus, err error) {
+	var tiList []m.TextInfoProxy
+	err = json.NewDecoder(r.Body).Decode(&tiList)
+	if err != nil {
+		return processStatus, err
+	}
+
+	// 1. Retrieve the ids and create a map from the request input
+	tpl := new(m.TextInfoProxyList)
+	tpl.SetList(tiList)
+	tiRequestMap, requestIds := tpl.List2Map()
+
+	// 2. Find all records matching to the requested Ids in the database
+	var storedList []m.TextInfoProxy
+	db.Table("text_info").Find(&storedList, requestIds)
+
+	// 3. Retrieve the ids and create a map from the stored records
+	tpl.SetList(storedList)
+	tiStoredMap, _ := tpl.List2Map()
+
+	// Iterate over the map with the records marked to be deleted and process them one by one
+	// Reject read-only records
+	// Ignore non-existent records
+	// Delete the valid non-readonly records
+	for key := range tiRequestMap {
+
+		if storedRecord, ok := tiStoredMap[key]; ok {
+			// the id is for an existing record
+			if storedRecord.IsReadOnly {
+				// do not delete the read-only record
+				processStatus = append(processStatus,
+					c.TokenProcessStatus{Id: key, Token: storedRecord.Token, Status: c.RequestStatus{Status: "faled", Message: fmt.Sprintf("Readn-only record (id = %d) cannot be deleted", key)}})
+			} else {
+				db.Exec("delete from text_info where id = ?", key)
+
+				processStatus = append(processStatus,
+					c.TokenProcessStatus{Id: key, Token: storedRecord.Token, Status: c.RequestStatus{Status: "deleted"}})
+			}
+		} else {
+			// missing record
+			processStatus = append(processStatus,
+				c.TokenProcessStatus{Id: key, Token: "", Status: c.RequestStatus{Status: "faled", Message: fmt.Sprintf("No record with id %d", key)}})
+		}
 	}
 
 	return processStatus, nil

@@ -101,6 +101,8 @@ func InitRouter(config c.Configurations, dbClient *gorm.DB) {
 
 	router.HandleFunc("/textInfo/batch", BatchUpdate).Methods("PUT")
 
+	router.HandleFunc("/textInfo/batch", BatchDelete).Methods("DELETE")
+
 	n := negroni.New()
 	n.Use(&PostRequestHandler{})
 	n.UseHandler(router)
@@ -248,6 +250,23 @@ func BatchCreate(w http.ResponseWriter, r *http.Request) {
 // for the collection of objects in the JSON format
 func BatchUpdate(w http.ResponseWriter, r *http.Request) {
 	response, err := s.BatchUpdate(r, db)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if json.NewEncoder(w).Encode(&response) != nil {
+		log.Printf("ERROR!!! - failed encoding the query response")
+	}
+}
+
+// BatchDelete DELETE method handler
+//
+// Wraps a call to the query service to delete multiple records in the text_info table
+// for the collection of objects in the JSON format
+func BatchDelete(w http.ResponseWriter, r *http.Request) {
+	response, err := s.BatchDelete(r, db)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

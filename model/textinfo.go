@@ -36,10 +36,42 @@ func (ti *TextInfo) Overwrite(textInfo TextInfo) {
 	numberOfFields := newObjectValue.NumField()
 	for i := 0; i < numberOfFields; i++ {
 		fmt.Printf("%d.Type:%T || Value:%#v\n",
-			(i + 1), newObjectValue.Field(i), newObjectValue.Field(i))
+			i+1, newObjectValue.Field(i), newObjectValue.Field(i))
 
 		fmt.Println("Kind is ", newObjectValue.Field(i).Kind())
 	}
+}
+
+// The proxy object containing limited fields from the Textinfo
+type TextInfoProxy struct {
+	Id         int    `json:"id"`
+	Token      string `json:"token"`
+	IsReadOnly bool   `gorm:"column:read_only" json:"readOnly"`
+}
+
+// a structure representing the TextInfoProxy list
+type TextInfoProxyList struct {
+	List []TextInfoProxy
+}
+
+// SetList sets the collection to the wrapper structure
+func (proxyList *TextInfoProxyList) SetList(list []TextInfoProxy) {
+	proxyList.List = list
+}
+
+// convert2Map converts the structure representing the list of the TextInfoProxy objects
+// into the map where the key of the item in the map is the Id of the TextInfoProxy
+func (proxyList TextInfoProxyList) List2Map() (map[int]TextInfoProxy, []int) {
+
+	var ids []int
+	m := make(map[int]TextInfoProxy)
+
+	for _, ti := range proxyList.List {
+		m[ti.Id] = ti
+		ids = append(ids, ti.Id)
+	}
+
+	return m, ids
 }
 
 type TokenText struct {
