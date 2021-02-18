@@ -10,7 +10,7 @@ database:
   dbpassword: "postgres"
   dbname: "ia_text"
   sslmode: "disable"
-  showqueries: true
+  showqueries: false
   dbcp:
     maxidle: 20
     maxactive: 200

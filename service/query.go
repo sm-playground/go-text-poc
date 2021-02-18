@@ -1,15 +1,12 @@
 package service
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
 	c "github.com/sm-playground/go-text-poc/config"
+	d "github.com/sm-playground/go-text-poc/db"
 	m "github.com/sm-playground/go-text-poc/model"
-	"log"
-	"net/http"
 	"strings"
 )
 
@@ -38,14 +35,11 @@ type ResolvedPlaceholder struct {
 }
 
 // GetTextInfo returns the list of records from the text_info database in JSON format
-func GetTextInfo(r *http.Request, db *gorm.DB) (textInfoList []m.TextInfo) {
+func GetTextInfo(tokens []string, al string) (textInfoList []m.TextInfo) {
+	db := d.GetConnection()
 
-	tokens, ok := r.URL.Query()["token"]
+	if tokens != nil {
 
-	if ok && len(tokens[0]) > 0 {
-		log.Printf("Url Param 'token' -> %s\n", tokens[0])
-
-		al := r.Header.Get("Accept-Language")
 		if al == "" {
 			al = "en-US"
 		}
@@ -55,7 +49,6 @@ func GetTextInfo(r *http.Request, db *gorm.DB) (textInfoList []m.TextInfo) {
 
 		als := strings.Split(al, ",")
 		for _, locale := range als {
-			// i - 0
 			// locale en-CA
 			l := strings.Split(locale, "-")
 
@@ -97,8 +90,9 @@ func GetTextInfo(r *http.Request, db *gorm.DB) (textInfoList []m.TextInfo) {
 // GetSingleTextInfo returns the single record from the text_info table
 //
 // for the given id parameter in JSON format
-func GetSingleTextInfo(r *http.Request, db *gorm.DB) (textInfo m.TextInfo, err error) {
-	params := mux.Vars(r)
+func GetSingleTextInfo(params map[string]string) (textInfo m.TextInfo, err error) {
+
+	db := d.GetConnection()
 
 	if db.First(&textInfo, params["id"]).RecordNotFound() {
 		err = errors.New(fmt.Sprintf("The record with id=%s is not found", params["id"]))
@@ -112,17 +106,14 @@ func GetSingleTextInfo(r *http.Request, db *gorm.DB) (textInfo m.TextInfo, err e
 //
 // The function is a handler for the POST requests. The returned data is filtered by country, locale, and
 // target (company Id) and capable of processing multiple token with and without the data for the placeholders.
-func ReadData(r *http.Request, db *gorm.DB, config c.Configurations) (data []m.TokenText, err error) {
-	var payload m.TextInfoPayload
+func ReadData(payload m.TextInfoPayload) (data []m.TokenText, err error) {
+	db := d.GetConnection()
 
-	err = json.NewDecoder(r.Body).Decode(&payload)
-	if err != nil {
-		return nil, err
-	}
+	config := c.GetInstance().Get()
 
 	var language, country string
 
-	language, country, err = resolveLocale(payload, config)
+	language, country, err = resolveLocale(payload)
 
 	if err != nil {
 		// return an error if the locale cannot be resolved
@@ -267,12 +258,12 @@ func resolveSingleToken(db *gorm.DB, tokenInfo m.TokenPayload, queryInput Single
 	} else {
 		var pt = ""
 		for _, record := range textInfo {
-			fmt.Printf("\n%s", pt)
+			// fmt.Printf("\n%s", pt)
 			if pt != record.Token {
 				pt = record.Token
 				// If the token has more than one record they are ordered as customized - localized - fallback
 				// take the first one and ignore the rest
-				fmt.Printf("\n%+v", record)
+				// fmt.Printf("\n%+v", record)
 				data = append(data, m.TokenText{Text: record.Text, Token: record.Token})
 			} else {
 				continue
@@ -316,7 +307,7 @@ func resolvePlaceholders(tokenInfo m.TokenPayload) (resolvedPlaceholder Resolved
 
 // The method takes the payload from the requests and reads the provided locale. In case of missing locale information
 // in the request the defaults from the config is returned
-func resolveLocale(payload m.TextInfoPayload, config c.Configurations) (language string, country string, err error) {
+func resolveLocale(payload m.TextInfoPayload) (language string, country string, err error) {
 	if strings.TrimSpace(payload.Locale) == "" {
 		// No locale is provided. Take the language and the country from the payload
 		language = payload.Language
@@ -333,6 +324,8 @@ func resolveLocale(payload m.TextInfoPayload, config c.Configurations) (language
 		language = strings.TrimSpace(l[0])
 		country = strings.TrimSpace(l[1])
 	}
+
+	config := c.GetInstance().Get()
 
 	if strings.TrimSpace(language) == "" {
 		language = config.DefaultLanguage

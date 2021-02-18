@@ -59,7 +59,7 @@ func (proxyList *TextInfoProxyList) SetList(list []TextInfoProxy) {
 	proxyList.List = list
 }
 
-// convert2Map converts the structure representing the list of the TextInfoProxy objects
+// List2Map converts the structure representing the list of the TextInfoProxy objects
 // into the map where the key of the item in the map is the Id of the TextInfoProxy
 func (proxyList TextInfoProxyList) List2Map() (map[int]TextInfoProxy, []int) {
 

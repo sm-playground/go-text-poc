@@ -4,19 +4,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/jinzhu/gorm"
 	c "github.com/sm-playground/go-text-poc/common"
 	cnf "github.com/sm-playground/go-text-poc/config"
+	d "github.com/sm-playground/go-text-poc/db"
 	m "github.com/sm-playground/go-text-poc/model"
-	"net/http"
+	"io"
 )
 
 // DeleteTextInfo Deletes a single record from the text_info table
-func DeleteTextInfo(r *http.Request, db *gorm.DB) (textInfo m.TextInfo, err error) {
+func DeleteTextInfo(params map[string]string) (textInfo m.TextInfo, err error) {
+
+	db := d.GetConnection()
+
 	var requestStatus c.RequestStatus
 
-	params := mux.Vars(r)
 	var deletedRecordId = params["id"]
 	if db.First(&textInfo, deletedRecordId).RecordNotFound() {
 		err = errors.New(fmt.Sprintf("The record with id=%s is not found", deletedRecordId))
@@ -32,12 +33,8 @@ func DeleteTextInfo(r *http.Request, db *gorm.DB) (textInfo m.TextInfo, err erro
 }
 
 // CreateTextInfo Creates a single record in the text_info table
-func CreateTextInfo(r *http.Request, db *gorm.DB, config cnf.Configurations) (textInfo m.TextInfo, err error) {
-
-	err = json.NewDecoder(r.Body).Decode(&textInfo)
-	if err != nil {
-		return textInfo, err
-	}
+func CreateTextInfo(textInfo m.TextInfo) (m.TextInfo, error) {
+	config := cnf.GetInstance().Get()
 
 	if textInfo.TargetId == "" {
 		// No target Id is specified so this record is applicable to all targets
@@ -45,15 +42,16 @@ func CreateTextInfo(r *http.Request, db *gorm.DB, config cnf.Configurations) (te
 		textInfo.SourceId = config.ServiceOwnerSourceId
 	}
 
-	err = createTextInfo(&textInfo, db, config)
+	err := createTextInfo(&textInfo)
 
 	return textInfo, err
 }
 
 // UpdateTextInfo updates the record in the text_info table. Only the fields specified in the request are updated
-func UpdateTextInfo(r *http.Request, db *gorm.DB) (textInfo m.TextInfo, err error) {
+func UpdateTextInfo(params map[string]string, body io.ReadCloser) (textInfo m.TextInfo, err error) {
 
-	params := mux.Vars(r)
+	db := d.GetConnection()
+
 	var id = params["id"]
 	if db.First(&textInfo, id).RecordNotFound() {
 		err = errors.New(fmt.Sprintf("The record with id=%s is not found", id))
@@ -61,7 +59,7 @@ func UpdateTextInfo(r *http.Request, db *gorm.DB) (textInfo m.TextInfo, err erro
 	} else {
 		var newPyload m.TextInfo
 
-		err = json.NewDecoder(r.Body).Decode(&newPyload)
+		err = json.NewDecoder(body).Decode(&newPyload)
 		if err != nil {
 			return textInfo, err
 		}
@@ -75,15 +73,16 @@ func UpdateTextInfo(r *http.Request, db *gorm.DB) (textInfo m.TextInfo, err erro
 }
 
 // OverwriteTextInfo updates the record in the text_info table. ALL fields are updated
-func OverwriteTextInfo(r *http.Request, db *gorm.DB) (textInfo m.TextInfo, err error) {
+func OverwriteTextInfo(params map[string]string, body io.ReadCloser) (textInfo m.TextInfo, err error) {
 
-	params := mux.Vars(r)
+	db := d.GetConnection()
+
 	var id = params["id"]
 	if db.First(&textInfo, id).RecordNotFound() {
 		err = errors.New(fmt.Sprintf("The record with id=%s is not found", id))
 		return textInfo, err
 	} else {
-		err = json.NewDecoder(r.Body).Decode(&textInfo)
+		err = json.NewDecoder(body).Decode(&textInfo)
 
 		if err != nil {
 			return textInfo, err
@@ -96,10 +95,10 @@ func OverwriteTextInfo(r *http.Request, db *gorm.DB) (textInfo m.TextInfo, err e
 
 // createTextInfo creates a single record in the text_info table
 // for the textInfo input parameter.
-func createTextInfo(textInfo *m.TextInfo, db *gorm.DB, config cnf.Configurations) (err error) {
+func createTextInfo(textInfo *m.TextInfo) (err error) {
 	if textInfo.Token != "" {
 
-		_, err = upsertTextInfo(textInfo, db, config)
+		_, err = upsertTextInfo(textInfo)
 	} else {
 		err = errors.New("no token value found")
 	}
@@ -110,10 +109,10 @@ func createTextInfo(textInfo *m.TextInfo, db *gorm.DB, config cnf.Configurations
 // - - - - Batch processing functions - - - -
 
 // BatchCreate addresses the user's request for batch create
-func BatchCreate(r *http.Request, db *gorm.DB, config cnf.Configurations) (processStatus []c.TokenProcessStatus, err error) {
+func BatchCreate(body io.ReadCloser) (processStatus []c.TokenProcessStatus, err error) {
 	var textInfoList []m.TextInfo
 
-	err = json.NewDecoder(r.Body).Decode(&textInfoList)
+	err = json.NewDecoder(body).Decode(&textInfoList)
 
 	if err != nil {
 		return processStatus, err
@@ -121,7 +120,7 @@ func BatchCreate(r *http.Request, db *gorm.DB, config cnf.Configurations) (proce
 
 	for _, textInfo := range textInfoList {
 
-		ps, err := upsertTextInfo(&textInfo, db, config)
+		ps, err := upsertTextInfo(&textInfo)
 		if err != nil {
 			ps = c.TokenProcessStatus{Id: textInfo.Id,
 				Token:  textInfo.Token,
@@ -134,17 +133,18 @@ func BatchCreate(r *http.Request, db *gorm.DB, config cnf.Configurations) (proce
 }
 
 // BatchUpdate addresses the user's request for batch update
-func BatchUpdate(r *http.Request, db *gorm.DB) (processStatus []c.TokenProcessStatus, err error) {
+func BatchUpdate(body io.ReadCloser) (processStatus []c.TokenProcessStatus, err error) {
+
 	var textInfoList []m.TextInfo
 
-	err = json.NewDecoder(r.Body).Decode(&textInfoList)
+	err = json.NewDecoder(body).Decode(&textInfoList)
 
 	if err != nil {
 		return processStatus, err
 	}
 
 	for _, textInfo := range textInfoList {
-		ps := updateSingleRecord(&textInfo, db)
+		ps := updateSingleRecord(&textInfo)
 
 		processStatus = append(processStatus, ps)
 	}
@@ -153,9 +153,11 @@ func BatchUpdate(r *http.Request, db *gorm.DB) (processStatus []c.TokenProcessSt
 }
 
 // BatchDelete addresses the user's request for batch delete
-func BatchDelete(r *http.Request, db *gorm.DB) (processStatus []c.TokenProcessStatus, err error) {
+func BatchDelete(body io.ReadCloser) (processStatus []c.TokenProcessStatus, err error) {
+	db := d.GetConnection()
+
 	var tiList []m.TextInfoProxy
-	err = json.NewDecoder(r.Body).Decode(&tiList)
+	err = json.NewDecoder(body).Decode(&tiList)
 	if err != nil {
 		return processStatus, err
 	}

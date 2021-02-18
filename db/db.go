@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 	c "github.com/sm-playground/go-text-poc/config"
 	m "github.com/sm-playground/go-text-poc/model"
 )
@@ -78,38 +79,42 @@ var (
 	}
 )
 
+var db *gorm.DB
+
 // initDatabase initializes the database
 // - connect to postgres
 // - runs AutoMigrate to create the database
 // - populate the text_info table with the localized records list
-func InitDatabase(config c.Configurations) (db *gorm.DB) {
+func InitDatabase() (db *gorm.DB) {
+
+	conf := c.GetInstance().Get()
 
 	var err error
 
 	dbConnect := fmt.Sprintf("port=%d user=%s dbname=%s sslmode=%s password=%s",
-		config.Database.Port,
-		config.Database.DBUser,
-		config.Database.DBName,
-		config.Database.SSLMode,
-		config.Database.DBPassword)
+		conf.Database.Port,
+		conf.Database.DBUser,
+		conf.Database.DBName,
+		conf.Database.SSLMode,
+		conf.Database.DBPassword)
 
-	db, err = gorm.Open(config.Database.Dialect, dbConnect)
+	db, err = gorm.Open(conf.Database.Dialect, dbConnect)
 	if err != nil {
 		panic("failed to connect database")
 	}
 
-	db.DB().SetMaxIdleConns(config.Database.DBCP.MaxIdle)
-	db.DB().SetMaxOpenConns(config.Database.DBCP.MaxActive)
+	db.DB().SetMaxIdleConns(conf.Database.DBCP.MaxIdle)
+	db.DB().SetMaxOpenConns(conf.Database.DBCP.MaxActive)
 
 	// set the log mode to see the queries executed by the gorm
-	db.LogMode(true)
+	db.LogMode(conf.Database.ShowQueries)
 
 	// instructs gorm to create the tables with the singular names
 	db.SingularTable(true)
 
 	// var initDatabase
 
-	if config.InitDatabase {
+	if conf.InitDatabase {
 		// create tables based on specified structs
 		db.AutoMigrate(&m.TextInfo{})
 
@@ -117,7 +122,7 @@ func InitDatabase(config c.Configurations) (db *gorm.DB) {
 		for index := range textInfo {
 			if "" == textInfo[index].SourceId {
 				// If there is no source Id use the value from the config file
-				textInfo[index].SourceId = config.ServiceOwnerSourceId
+				textInfo[index].SourceId = conf.ServiceOwnerSourceId
 			}
 			db.Create(&textInfo[index])
 		}
@@ -140,6 +145,14 @@ func InitDatabase(config c.Configurations) (db *gorm.DB) {
 			panic(err)
 		}
 
+	}
+
+	return db
+}
+
+func GetConnection() *gorm.DB {
+	if db == nil {
+		db = InitDatabase()
 	}
 
 	return db

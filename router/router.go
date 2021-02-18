@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/jinzhu/gorm"
 	cm "github.com/sm-playground/go-text-poc/common"
 	c "github.com/sm-playground/go-text-poc/config"
+	m "github.com/sm-playground/go-text-poc/model"
 	s "github.com/sm-playground/go-text-poc/service"
 	"github.com/urfave/negroni"
 	"log"
@@ -69,13 +69,9 @@ func (*PostRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request, nex
 	fmt.Printf("Execution time: %s \n", time.Now().Sub(t).String())
 }
 
-var db *gorm.DB
-var conf c.Configurations
-
 // Initializes all supported routers
-func InitRouter(config c.Configurations, dbClient *gorm.DB) {
-	conf = config
-	db = dbClient
+func InitRouter() {
+	config := c.GetInstance().Get()
 
 	router := mux.NewRouter().PathPrefix("/v1").Subrouter()
 
@@ -114,7 +110,10 @@ func InitRouter(config c.Configurations, dbClient *gorm.DB) {
 // Wraps a call to the query service method returning the complete list of the TextInfo records.
 // Returns the list in the JSON format in the response
 func GetTextInfo(w http.ResponseWriter, r *http.Request) {
-	var textInfoList = s.GetTextInfo(r, db)
+
+	var textInfoList = s.GetTextInfo(
+		r.URL.Query()["token"],
+		r.Header.Get("Accept-Language"))
 
 	if json.NewEncoder(w).Encode(&textInfoList) != nil {
 		log.Printf("ERROR!!! - failed encoding the query response")
@@ -123,10 +122,11 @@ func GetTextInfo(w http.ResponseWriter, r *http.Request) {
 
 // GetSingleTextInfo GET method handler
 // Wraps a call to the query service returning a single record from the text_info table for the given id.
+//
 // Returns the record in the JSON format in the response
 func GetSingleTextInfo(w http.ResponseWriter, r *http.Request) {
 
-	textInfo, err := s.GetSingleTextInfo(r, db)
+	textInfo, err := s.GetSingleTextInfo(mux.Vars(r))
 	if err != nil {
 		var requestStatus cm.RequestStatus
 		requestStatus.Status = "failed"
@@ -146,7 +146,7 @@ func GetSingleTextInfo(w http.ResponseWriter, r *http.Request) {
 func DeleteTextInfo(w http.ResponseWriter, r *http.Request) {
 
 	var requestStatus cm.RequestStatus
-	textInfo, err := s.DeleteTextInfo(r, db)
+	textInfo, err := s.DeleteTextInfo(mux.Vars(r))
 	if err != nil {
 		requestStatus.Status = "failed"
 		requestStatus.Message = err.Error()
@@ -162,8 +162,7 @@ func DeleteTextInfo(w http.ResponseWriter, r *http.Request) {
 
 // UpdateTextInfo updates the record in the text_info table. Only specified fields are updated
 func UpdateTextInfo(w http.ResponseWriter, r *http.Request) {
-
-	textInfo, err := s.UpdateTextInfo(r, db)
+	textInfo, err := s.UpdateTextInfo(mux.Vars(r), r.Body)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -178,7 +177,7 @@ func UpdateTextInfo(w http.ResponseWriter, r *http.Request) {
 // OverwriteTextInfo overwrites the record in the text_info table. ALL fields are updated
 func OverwriteTextInfo(w http.ResponseWriter, r *http.Request) {
 
-	textInfo, err := s.OverwriteTextInfo(r, db)
+	textInfo, err := s.OverwriteTextInfo(mux.Vars(r), r.Body)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -195,16 +194,23 @@ func OverwriteTextInfo(w http.ResponseWriter, r *http.Request) {
 // Wraps a call to the processing service to create a single record in the text_info table
 func CreateTextInfo(w http.ResponseWriter, r *http.Request) {
 
-	var textInfo, err = s.CreateTextInfo(r, db, conf)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	var ti m.TextInfo
+	er := json.NewDecoder(r.Body).Decode(&ti)
+	if er != nil {
+		http.Error(w, er.Error(), http.StatusBadRequest)
 		return
 	}
 
-	fmt.Printf("%+v\n", textInfo)
+	ti, er = s.CreateTextInfo(ti)
 
-	if json.NewEncoder(w).Encode(&textInfo) != nil {
+	if er != nil {
+		http.Error(w, er.Error(), http.StatusBadRequest)
+		return
+	}
+
+	fmt.Printf("%+v\n", ti)
+
+	if json.NewEncoder(w).Encode(&ti) != nil {
 		log.Printf("ERROR!!! - failed encoding the query response")
 	}
 }
@@ -214,7 +220,17 @@ func CreateTextInfo(w http.ResponseWriter, r *http.Request) {
 // Wraps a call to the query service to read the records from the database for the
 // query payload provided in the body of the request
 func ReadTextInfo(w http.ResponseWriter, r *http.Request) {
-	var tokenTextList, err = s.ReadData(r, db, conf)
+
+	var payload m.TextInfoPayload
+	err := json.NewDecoder(r.Body).Decode(&payload)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var tokenTextList []m.TokenText
+
+	tokenTextList, err = s.ReadData(payload)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -233,7 +249,7 @@ func ReadTextInfo(w http.ResponseWriter, r *http.Request) {
 // Wraps a call to the query service to create multiple records in the text_info table
 // for the collection of objects in the JSON format
 func BatchCreate(w http.ResponseWriter, r *http.Request) {
-	response, err := s.BatchCreate(r, db, conf)
+	response, err := s.BatchCreate(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -249,7 +265,7 @@ func BatchCreate(w http.ResponseWriter, r *http.Request) {
 // Wraps a call to the query service to update (overwrite) multiple records in the text_info table
 // for the collection of objects in the JSON format
 func BatchUpdate(w http.ResponseWriter, r *http.Request) {
-	response, err := s.BatchUpdate(r, db)
+	response, err := s.BatchUpdate(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -265,7 +281,7 @@ func BatchUpdate(w http.ResponseWriter, r *http.Request) {
 // Wraps a call to the query service to delete multiple records in the text_info table
 // for the collection of objects in the JSON format
 func BatchDelete(w http.ResponseWriter, r *http.Request) {
-	response, err := s.BatchDelete(r, db)
+	response, err := s.BatchDelete(r.Body)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

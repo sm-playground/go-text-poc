@@ -11,9 +11,9 @@ import (
 
 var pool *redis.Pool
 
-func InitCache(config c.Configurations) {
+func InitCache() {
 	// init redis connection pool
-	initPool(config)
+	initPool()
 
 	// bootstrap some data to redis
 	initStore()
@@ -86,7 +86,9 @@ func initStore() {
 	}
 }
 
-func initPool(config c.Configurations) {
+func initPool() {
+	config := c.GetInstance().Get()
+
 	pool = &redis.Pool{
 		MaxIdle:   config.Cache.Pool.MaxIdle,
 		MaxActive: config.Cache.Pool.MaxActive,

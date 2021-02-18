@@ -3,10 +3,13 @@ package config
 import (
 	"fmt"
 	"github.com/spf13/viper"
+	"os"
 	"strings"
 )
 
-type Configurations struct {
+const APP_NAME = "go-text-poc"
+
+type Configuration struct {
 	Server               ServerConfiguration
 	Database             DatabaseConfiguration
 	Cache                CacheConfiguration
@@ -23,13 +26,14 @@ type ServerConfiguration struct {
 }
 
 type DatabaseConfiguration struct {
-	Dialect    string
-	Port       int
-	DBUser     string
-	DBPassword string
-	DBName     string
-	SSLMode    string
-	DBCP       DBConnectionPool
+	Dialect     string
+	Port        int
+	DBUser      string
+	DBPassword  string
+	DBName      string
+	SSLMode     string
+	ShowQueries bool
+	DBCP        DBConnectionPool
 }
 
 type DBConnectionPool struct {
@@ -44,31 +48,63 @@ type CacheConfiguration struct {
 	Pool    DBConnectionPool
 }
 
-// Loads the application configuration parameters from the yaml file
-func LoadConfig() (configuration Configurations) {
-	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
-	viper.AutomaticEnv()
-	viper.SetConfigType("yml")
+type Config interface {
+	Get() Configuration
+}
 
-	// var configuration c.Configurations
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("Error reading config file, %s", err)
+type config struct {
+	CF Configuration
+}
+
+func (conf *config) Get() Configuration {
+	return conf.CF
+}
+
+var instance *config
+
+func GetInstance() Config {
+	if instance == nil {
+		instance = new(config)
+
+		pwd, _ := os.Getwd()
+
+		tokens := strings.Split(pwd, "/")
+		module := tokens[len(tokens)-1]
+
+		var configFileName string
+		if module == APP_NAME {
+			configFileName = "config"
+		} else {
+			configFileName = "config-" + module
+		}
+
+		viper.SetConfigName(configFileName)
+		viper.AddConfigPath(".")
+		viper.AutomaticEnv()
+		viper.SetConfigType("yml")
+
+		// var configuration c.Configuration
+		if err := viper.ReadInConfig(); err != nil {
+			fmt.Printf("Error reading config file, %s", err)
+		}
+
+		var configuration Configuration
+		if err := viper.Unmarshal(&configuration); err != nil {
+			fmt.Printf("Error unmarshalling config file, %s", err)
+		}
+
+		l := strings.Split(configuration.DefaultLocale, "-")
+
+		if len(l) != 2 {
+			// the locale is expected in the format of "en-US"
+			// Ignore all other cases
+			panic("incorrect format for locale: " + fmt.Sprintf("%+v", configuration.DefaultLocale))
+		}
+		configuration.DefaultLanguage = strings.TrimSpace(l[0])
+		configuration.DefaultCountry = strings.TrimSpace(l[1])
+
+		instance.CF = configuration
+
 	}
-
-	if err := viper.Unmarshal(&configuration); err != nil {
-		fmt.Printf("Error unmarshalling config file, %s", err)
-	}
-
-	l := strings.Split(configuration.DefaultLocale, "-")
-
-	if len(l) != 2 {
-		// the locale is expected in the format of "en-US"
-		// Ignore all other cases
-		panic("incorrect format for locale: " + fmt.Sprintf("%+v", configuration.DefaultLocale))
-	}
-	configuration.DefaultLanguage = strings.TrimSpace(l[0])
-	configuration.DefaultCountry = strings.TrimSpace(l[1])
-
-	return configuration
+	return instance
 }

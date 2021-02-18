@@ -7,21 +7,19 @@ import (
 	"github.com/sm-playground/go-text-poc/redisClient"
 	"log"
 
-	c "github.com/sm-playground/go-text-poc/config"
 	"github.com/sm-playground/go-text-poc/db"
 	r "github.com/sm-playground/go-text-poc/router"
 )
 
 var dbClient *gorm.DB
-var config c.Configurations
 
 func main() {
 
-	// Read configuration parameters
-	config = c.LoadConfig()
-
 	// Initialize the database and populate with the sample data
-	dbClient = db.InitDatabase(config)
+	dbClient = db.GetConnection()
+
+	// var textInfo []m.TextInfo
+	// dbClient.Raw("select * from text_info").Scan(textInfo)
 
 	defer func() {
 		fmt.Println("\nClose DB connection")
@@ -31,7 +29,7 @@ func main() {
 	}()
 
 	// Initialize redis connection pool
-	redisClient.InitCache(config)
+	redisClient.InitCache()
 
 	err := redisClient.Set("hello", "hello world")
 
@@ -39,6 +37,6 @@ func main() {
 
 	fmt.Println(hello, err)
 
-	r.InitRouter(config, dbClient)
+	r.InitRouter()
 
 }
