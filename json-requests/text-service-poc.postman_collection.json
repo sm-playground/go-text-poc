@@ -1,0 +1,503 @@
+{
+	"info": {
+		"_postman_id": "f1cf7413-913b-4e72-8a14-32f67856decd",
+		"name": "text-service-poc",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1.GET-all",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8090/v1/textInfo",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"v1",
+						"textInfo"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "2.GET-1",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8090/v1/textInfo/2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"v1",
+						"textInfo",
+						"2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3.GET-token-locale-specific",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "en-US,de-DE,fr-FR",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8090/v1/textInfo?token=IA.AR.ARINVOICE.EDIT.LABEL.RECORDTYPE",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"v1",
+						"textInfo"
+					],
+					"query": [
+						{
+							"key": "token",
+							"value": "IA.AR.ARINVOICE.EDIT.LABEL.RECORDTYPE"
+						}
+					]
+				},
+				"description": "Queries for a specific token with a locales in the header"
+			},
+			"response": []
+		},
+		{
+			"name": "4.DELETE-26",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8090/v1/textInfo/26",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"v1",
+						"textInfo",
+						"26"
+					]
+				},
+				"description": "Delete the record with Id = 26"
+			},
+			"response": []
+		},
+		{
+			"name": "5.POST-create-fallback",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"token\": \"CREATE.RECORD.TYPE.IN.ARMENIAN\",\n    \"text\": \"Fallback Գրանցման տեսակը\",\n    \"action\": \"Create\",\n    \"country\": \"AM\",\n    \"language\": \"am\",\n    \"readOnly\": true\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8090/v1/textInfo",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"v1",
+						"textInfo"
+					]
+				},
+				"description": "Create a fallback record. \nNo isFallback = true is specified but assuming that there is no record for such a tocken for a given locale"
+			},
+			"response": []
+		},
+		{
+			"name": "6.POST-create-localized",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"token\": \"CREATE.RECORD.TYPE.IN.ARMENIAN\",\n    \"text\": \"Localized Գրանցման տեսակը\",\n    \"action\": \"Create\",\n    \"country\": \"AM\",\n    \"language\": \"am\",\n    \"readOnly\": false,\n    \"fallBack\": false\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8090/v1/textInfo",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"v1",
+						"textInfo"
+					]
+				},
+				"description": "Create a localized record. \nfallback = false to ensure this is not a fallback record"
+			},
+			"response": []
+		},
+		{
+			"name": "7.POST-create-customized",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"token\": \"CREATE.RECORD.TYPE.IN.ARMENIAN\",\n    \"text\": \"Customized Գրանցման տեսակը\",\n    \"action\": \"Create\",\n    \"country\": \"AM\",\n    \"language\": \"am\",\n    \"readOnly\": false,\n    \"fallBack\": false,\n    \"sourceId\": \"PRT-0066\",\n    \"targetId\": \"123456\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8090/v1/textInfo",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"v1",
+						"textInfo"
+					]
+				},
+				"description": "Create customized record.\nsourceId and targetId are provided"
+			},
+			"response": []
+		},
+		{
+			"name": "8.POST-create-with-placeholders",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"token\": \"CONSTRUCTION.PARAMETRIZED.THREE.VARIABLES\",\n    \"text\": \"Dear Mr. {LEADER}, {ACTION} this {STRUCTURE}\",\n    \"action\": \"Help\",\n    \"country\": \"US\",\n    \"locale\": \"en\",\n    \"readOnly\": true\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8090/v1/textInfo",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"v1",
+						"textInfo"
+					]
+				},
+				"description": "Create a record with placeholders"
+			},
+			"response": []
+		},
+		{
+			"name": "9.PUT-update-customized",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"Token\": \"IA.AR.ARINVOICE.VIEW.LABEL.RECORDTYPE\",\n    \"Text\": \"de_CH Customized Der Datensatztyp updated\",\n    \"targetId\": \"123456\",\n    \"sourceId\": \"PRT-002\",\n    \"language\": \"de\",\n    \"country\": \"CH\",\n    \"action\": \"View\",\n    \"sourceType\": \"\",\n    \"readOnly\": false,\n    \"fallBack\": false,\n    \"noun\": \"\",\n    \"function\": \"\",\n    \"verb\": \"\",\n    \"application\": \"\",\n    \"module\": \"AR\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/v1/textInfo/37",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"textInfo",
+						"37"
+					]
+				},
+				"description": "Updates the existing record. The id is in URL"
+			},
+			"response": []
+		},
+		{
+			"name": "90.POST-query-parametrized",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"targetId\": \"123456\",\n    \"locale\": \"en\",\n    \"country\": \"US\",\n    \"format\": {\n        \"date\": \"yyyy-MM-dd\",\n        \"time\": \"yyyy-MM-dd HH:mm:ss\",\n        \"number\": \"#,###.##\",\n        \"currency\": \"#,###.##\",\n        \"currencySymbol\": \"$\"\n    },\n    \"tokens\": [\n        {\n            \"token\": \"IA.AR.ARINVOICE.VIEW.HELP.RECORDTYPE\",\n            \"placeholders\": [\n                {\n                    \"name\": \"TYPE_ONE\",\n                    \"value\": \"'hidden'\"\n                },\n                {\n                    \"name\": \"TYPE_TWO\",\n                    \"value\": \"'read-only'\"\n                },\n                {\n                    \"name\": \"TYPE_THREE\",\n                    \"value\": \"'disabled'\"\n                }\n            ]\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/v1/textInfo",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"textInfo"
+					]
+				},
+				"description": "Query a record with placeholders"
+			},
+			"response": []
+		},
+		{
+			"name": "91.POST-query-parametrized-missing-value",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"targetId\": \"123456\",\n    \"locale\": \"en\",\n    \"country\": \"US\",\n    \"format\": {\n        \"date\": \"yyyy-MM-dd\",\n        \"time\": \"yyyy-MM-dd HH:mm:ss\",\n        \"number\": \"#,###.##\",\n        \"currency\": \"#,###.##\",\n        \"currencySymbol\": \"$\"\n    },\n    \"tokens\": [\n        {\n            \"token\": \"IA.AR.ARINVOICE.VIEW.HELP.RECORDTYPE\",\n            \"placeholders\": [\n                {\n                    \"name\": \"TYPE_ONE\",\n                    \"value\": \"'hidden'\"\n                },\n                {\n                    \"name\": \"TYPE_TWO\",\n                    \"value\": \"'read-only'\"\n                },\n                {\n                    \"name\": \"TYPE_THREE\",\n                    \"value\": \"'disabled'\"\n                }\n            ]\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/v1/textInfo",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"textInfo"
+					]
+				},
+				"description": "Query a record with placeholders providing not all placeholders"
+			},
+			"response": []
+		},
+		{
+			"name": "92.POST-query-multiple-tokens",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"targetId\": \"123456\",\n    \"locale\": \"en-US\",\n    \"format\": {\n        \"date\": \"yyyy-MM-dd\",\n        \"time\": \"yyyy-MM-dd HH:mm:ss\",\n        \"number\": \"#,###.##\",\n        \"currency\": \"#,###.##\",\n        \"currencySymbol\": \"$\"\n    },\n    \"tokens\": [\n        {\n            \"token\": \"IA.AR.ARINVOICE.EDIT.LABEL.RECORDTYPE\"\n        },\n        {\n            \"token\": \"IA.AR.ARINVOICE.EDIT.LABEL.DUE_IN_DAYS\"\n        },\n        {\n            \"token\": \"ABRA.CADAB.RA\"\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8090/v1/textInfo/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"v1",
+						"textInfo",
+						"query"
+					]
+				},
+				"description": "Includes multiple token.\nReturns customized/localized/fallback/token depend on records in the database"
+			},
+			"response": []
+		},
+		{
+			"name": "93.POST-query-by-pattern",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"targetId\": \"123456\",\n    \"locale\": \"en-US\",\n    \"format\": {\n        \"date\": \"yyyy-MM-dd\",\n        \"time\": \"yyyy-MM-dd HH:mm:ss\",\n        \"number\": \"#,###.##\",\n        \"currency\": \"#,###.##\",\n        \"currencySymbol\": \"$\"\n    },\n    \"tokens\": [\n        {\n            \"token\": \"IA.AR.ARINVOICE.EDIT\"\n        },\n        {\n            \"token\": \"ABRA.CADAB.RA\"\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8090/v1/textInfo/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"v1",
+						"textInfo",
+						"query"
+					]
+				},
+				"description": "Returns all the records matching the tokens in the request. Implementation of the LIKE%"
+			},
+			"response": []
+		},
+		{
+			"name": "100.POST-batch-create",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"targetId\": \"123456\",\n    \"locale\": \"en-US\",\n    \"format\": {\n        \"date\": \"yyyy-MM-dd\",\n        \"time\": \"yyyy-MM-dd HH:mm:ss\",\n        \"number\": \"#,###.##\",\n        \"currency\": \"#,###.##\",\n        \"currencySymbol\": \"$\"\n    },\n    \"tokens\": [\n        {\n            \"token\": \"IA.AR.ARINVOICE.EDIT\"\n        },\n        {\n            \"token\": \"ABRA.CADAB.RA\"\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8090/v1/textInfo/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"v1",
+						"textInfo",
+						"query"
+					]
+				},
+				"description": "Create multiple records in a single batch request."
+			},
+			"response": []
+		},
+		{
+			"name": "101.POST-batch-create-update",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "[\n    {\n        \"token\": \"IA.AR.ARINVOICE.VIEW.LABEL.ABCD.ONE\",\n        \"text\": \"Created Customized text 123456 - Գրանցման տեսակը\",\n        \"action\": \"View\",\n        \"country\": \"AM\",\n        \"language\": \"am\",\n        \"targetId\": \"7777\"\n    },\n    {\n        \"token\": \"IA.AR.ARINVOICE.VIEW.LABEL.ABCD.ONE\",\n        \"text\": \"Updated Customized text 987654 - Գրանցման տեսակը\",\n        \"action\": \"Update\",\n        \"country\": \"AM\",\n        \"language\": \"am\",\n        \"targetId\": \"987654\"\n    }\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8090/v1/textInfo/batch",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"v1",
+						"textInfo",
+						"batch"
+					]
+				},
+				"description": "Request for creating multiple records in a single batch request. However, if executed after #100 will create one record and update the record with matching token and targetId"
+			},
+			"response": []
+		},
+		{
+			"name": "102.PUT-batch-update",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "[\n    {\n        \"id\": 910,\n        \"token\": \"IA.AR.ARINVOICE.VIEW.LABEL.ABCD.ONE\",\n        \"text\": \"Batch Updated Customized text 6543 - Գրանցման տեսակը\",\n        \"action\": \"Update\",\n        \"country\": \"AM\",\n        \"language\": \"am\",\n        \"targetId\": \"6543\",\n        \"module\": \"AR\"\n    },\n    {\n        \"id\": 909,\n        \"token\": \"IA.AR.ARINVOICE.VIEW.LABEL.ABCD.ONE\",\n        \"text\": \"Batch Updated Customized text 987654 - Գրանցման տեսակը\",\n        \"action\": \"Update\",\n        \"country\": \"AM\",\n        \"language\": \"am\",\n        \"targetId\": \"987654\",\n        \"module\": \"AR\"\n    }\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8090/v1/textInfo/batch",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"v1",
+						"textInfo",
+						"batch"
+					]
+				},
+				"description": "Request for updating multiple records in a single batch request. Pay attention to the response, comes back with the status updated"
+			},
+			"response": []
+		},
+		{
+			"name": "103.DELETE-batch-delete",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "[\n    {\n        \"id\": 910\n    },\n    {\n        \"id\": 909\n    }\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8090/v1/textInfo/batch",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"v1",
+						"textInfo",
+						"batch"
+					]
+				},
+				"description": "Request for deleting multiple records in a single batch request"
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}

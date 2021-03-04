@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	cache "github.com/sm-playground/go-text-poc/cache_client"
 	c "github.com/sm-playground/go-text-poc/common"
 	cnf "github.com/sm-playground/go-text-poc/config"
 	d "github.com/sm-playground/go-text-poc/db"
 	m "github.com/sm-playground/go-text-poc/model"
 	"io"
+	"strconv"
 )
 
 // DeleteTextInfo Deletes a single record from the text_info table
@@ -25,6 +27,10 @@ func DeleteTextInfo(params map[string]string) (textInfo m.TextInfo, err error) {
 	} else {
 		err = nil
 		db.Delete(&textInfo)
+
+		cacheClient, _ := cache.GetCacheClient()
+		_ = cacheClient.Invalidate("*" + textInfo.Token + "*")
+
 		requestStatus.Status = "success"
 		requestStatus.Message = fmt.Sprintf("The record with id=%s was deleted", deletedRecordId)
 	}
@@ -43,6 +49,21 @@ func CreateTextInfo(textInfo m.TextInfo) (m.TextInfo, error) {
 	}
 
 	err := createTextInfo(&textInfo)
+	if err == nil {
+		queryInput := SingleQueryInput{
+			ServiceOwnerSourceId: config.ServiceOwnerSourceId,
+			DefaultCountry:       config.DefaultCountry,
+			DefaultLanguage:      config.DefaultLanguage,
+			Country:              textInfo.Country,
+			Language:             textInfo.Language,
+			TargetId:             textInfo.TargetId,
+			SourceId:             textInfo.SourceId}
+		cacheKey := getReadDataCacheKey(queryInput, textInfo.Token+"%")
+		var cacheClient cache.CacheClient
+		if cacheClient, err = cache.GetCacheClient(); err == nil {
+			_ = cacheClient.Set(cacheKey, textInfo)
+		}
+	}
 
 	return textInfo, err
 }
@@ -73,23 +94,23 @@ func UpdateTextInfo(params map[string]string, body io.ReadCloser) (textInfo m.Te
 }
 
 // OverwriteTextInfo updates the record in the text_info table. ALL fields are updated
-func OverwriteTextInfo(params map[string]string, body io.ReadCloser) (textInfo m.TextInfo, err error) {
+func OverwriteTextInfo(params map[string]string, ti m.TextInfo) (m.TextInfo, error) {
 
 	db := d.GetConnection()
 
+	var textInfo m.TextInfo
 	var id = params["id"]
 	if db.First(&textInfo, id).RecordNotFound() {
-		err = errors.New(fmt.Sprintf("The record with id=%s is not found", id))
+		err := errors.New(fmt.Sprintf("The record with id=%s is not found", id))
 		return textInfo, err
 	} else {
-		err = json.NewDecoder(body).Decode(&textInfo)
-
-		if err != nil {
-			return textInfo, err
+		if v, err := strconv.Atoi(params["id"]); err == nil {
+			// Convert the value of Id into integer
+			ti.Id = v
+			db.Save(&ti)
 		}
-		db.Save(&textInfo)
 
-		return textInfo, nil
+		return ti, nil
 	}
 }
 
@@ -109,14 +130,7 @@ func createTextInfo(textInfo *m.TextInfo) (err error) {
 // - - - - Batch processing functions - - - -
 
 // BatchCreate addresses the user's request for batch create
-func BatchCreate(body io.ReadCloser) (processStatus []c.TokenProcessStatus, err error) {
-	var textInfoList []m.TextInfo
-
-	err = json.NewDecoder(body).Decode(&textInfoList)
-
-	if err != nil {
-		return processStatus, err
-	}
+func BatchCreate(textInfoList []m.TextInfo) (processStatus []c.TokenProcessStatus, err error) {
 
 	for _, textInfo := range textInfoList {
 
@@ -133,15 +147,7 @@ func BatchCreate(body io.ReadCloser) (processStatus []c.TokenProcessStatus, err 
 }
 
 // BatchUpdate addresses the user's request for batch update
-func BatchUpdate(body io.ReadCloser) (processStatus []c.TokenProcessStatus, err error) {
-
-	var textInfoList []m.TextInfo
-
-	err = json.NewDecoder(body).Decode(&textInfoList)
-
-	if err != nil {
-		return processStatus, err
-	}
+func BatchUpdate(textInfoList []m.TextInfo) (processStatus []c.TokenProcessStatus, err error) {
 
 	for _, textInfo := range textInfoList {
 		ps := updateSingleRecord(&textInfo)
@@ -153,14 +159,8 @@ func BatchUpdate(body io.ReadCloser) (processStatus []c.TokenProcessStatus, err 
 }
 
 // BatchDelete addresses the user's request for batch delete
-func BatchDelete(body io.ReadCloser) (processStatus []c.TokenProcessStatus, err error) {
+func BatchDelete(tiList []m.TextInfoProxy) (processStatus []c.TokenProcessStatus, err error) {
 	db := d.GetConnection()
-
-	var tiList []m.TextInfoProxy
-	err = json.NewDecoder(body).Decode(&tiList)
-	if err != nil {
-		return processStatus, err
-	}
 
 	// 1. Retrieve the ids and create a map from the request input
 	tpl := new(m.TextInfoProxyList)

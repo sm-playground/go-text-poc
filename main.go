@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"github.com/sm-playground/go-text-poc/redisClient"
+	cache "github.com/sm-playground/go-text-poc/cache_client"
 	"log"
 
 	"github.com/sm-playground/go-text-poc/db"
@@ -13,7 +13,20 @@ import (
 
 var dbClient *gorm.DB
 
+// main the application entry point
 func main() {
+
+	cacheClient, er := cache.GetCacheClient()
+	if er != nil {
+		panic("failed to connect to in-memory store")
+
+	} else {
+		if cacheClient.Set("hello", "hello world!!!") == nil {
+			_ = cacheClient.Delete("hello")
+		} else {
+			panic("failed to read from in-memory store")
+		}
+	}
 
 	// Initialize the database and populate with the sample data
 	dbClient = db.GetConnection()
@@ -28,15 +41,7 @@ func main() {
 		}
 	}()
 
-	// Initialize redis connection pool
-	redisClient.InitCache()
-
-	err := redisClient.Set("hello", "hello world")
-
-	hello, err := redisClient.Get("hello")
-
-	fmt.Println(hello, err)
-
+	// Initialize router
 	r.InitRouter()
 
 }

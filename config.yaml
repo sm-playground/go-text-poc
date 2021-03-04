@@ -1,7 +1,7 @@
 
 server:
   ip: 0.0.0.0
-  port: 8080
+  port: 8090
 
 database:
   dialect: "postgres"
@@ -16,6 +16,7 @@ database:
     maxactive: 200
 
 cache:
+  dialect: "redis"
   network: "tcp"
   ip: "localhost"
   port: 63790
@@ -23,6 +24,6 @@ cache:
     maxidle: 80
     maxactive: 12000
 
-InitDatabase: false
+InitDatabase: true
 DefaultLocale: en-US
 ServiceOwnerSourceId: IA

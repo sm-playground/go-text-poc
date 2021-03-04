@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/spf13/viper"
 	"os"
+	"runtime"
 	"strings"
 )
 
@@ -42,11 +43,19 @@ type DBConnectionPool struct {
 }
 
 type CacheConfiguration struct {
+	Dialect CacheClientType
 	Network string
 	IP      string
 	Port    int
 	Pool    DBConnectionPool
 }
+
+type CacheClientType string
+
+const (
+	Redis     CacheClientType = "redis"
+	Memcached CacheClientType = "memcached"
+)
 
 type Config interface {
 	Get() Configuration
@@ -68,7 +77,13 @@ func GetInstance() Config {
 
 		pwd, _ := os.Getwd()
 
-		tokens := strings.Split(pwd, "/")
+		var tokens []string
+		if runtime.GOOS == "windows" {
+			tokens = strings.Split(pwd, "\\")
+		} else {
+			tokens = strings.Split(pwd, "/")
+		}
+
 		module := tokens[len(tokens)-1]
 
 		var configFileName string

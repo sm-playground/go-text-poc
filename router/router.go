@@ -111,7 +111,7 @@ func InitRouter() {
 // Returns the list in the JSON format in the response
 func GetTextInfo(w http.ResponseWriter, r *http.Request) {
 
-	var textInfoList = s.GetTextInfo(
+	var textInfoList, _ = s.GetTextInfo(
 		r.URL.Query()["token"],
 		r.Header.Get("Accept-Language"))
 
@@ -177,7 +177,14 @@ func UpdateTextInfo(w http.ResponseWriter, r *http.Request) {
 // OverwriteTextInfo overwrites the record in the text_info table. ALL fields are updated
 func OverwriteTextInfo(w http.ResponseWriter, r *http.Request) {
 
-	textInfo, err := s.OverwriteTextInfo(mux.Vars(r), r.Body)
+	var ti m.TextInfo
+	er := json.NewDecoder(r.Body).Decode(&ti)
+	if er != nil {
+		http.Error(w, er.Error(), http.StatusBadRequest)
+		return
+	}
+
+	textInfo, err := s.OverwriteTextInfo(mux.Vars(r), ti)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -249,7 +256,15 @@ func ReadTextInfo(w http.ResponseWriter, r *http.Request) {
 // Wraps a call to the query service to create multiple records in the text_info table
 // for the collection of objects in the JSON format
 func BatchCreate(w http.ResponseWriter, r *http.Request) {
-	response, err := s.BatchCreate(r.Body)
+	var textInfoList []m.TextInfo
+
+	err := json.NewDecoder(r.Body).Decode(&textInfoList)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	response, err := s.BatchCreate(textInfoList)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -265,7 +280,15 @@ func BatchCreate(w http.ResponseWriter, r *http.Request) {
 // Wraps a call to the query service to update (overwrite) multiple records in the text_info table
 // for the collection of objects in the JSON format
 func BatchUpdate(w http.ResponseWriter, r *http.Request) {
-	response, err := s.BatchUpdate(r.Body)
+	var textInfoList []m.TextInfo
+
+	err := json.NewDecoder(r.Body).Decode(&textInfoList)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	response, err := s.BatchUpdate(textInfoList)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -281,7 +304,14 @@ func BatchUpdate(w http.ResponseWriter, r *http.Request) {
 // Wraps a call to the query service to delete multiple records in the text_info table
 // for the collection of objects in the JSON format
 func BatchDelete(w http.ResponseWriter, r *http.Request) {
-	response, err := s.BatchDelete(r.Body)
+	var tiList []m.TextInfoProxy
+	err := json.NewDecoder(r.Body).Decode(&tiList)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	response, err := s.BatchDelete(tiList)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

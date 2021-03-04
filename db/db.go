@@ -118,13 +118,17 @@ func InitDatabase() (db *gorm.DB) {
 		// create tables based on specified structs
 		db.AutoMigrate(&m.TextInfo{})
 
-		// Iterate over all the hardcoded records and insert into the database
-		for index := range textInfo {
-			if "" == textInfo[index].SourceId {
-				// If there is no source Id use the value from the config file
-				textInfo[index].SourceId = conf.ServiceOwnerSourceId
+		var count int64
+		db.Model(&m.TextInfo{}).Count(&count)
+		if count == 0 {
+			// Iterate over all the hardcoded records and insert into the database
+			for index := range textInfo {
+				if "" == textInfo[index].SourceId {
+					// If there is no source Id use the value from the config file
+					textInfo[index].SourceId = conf.ServiceOwnerSourceId
+				}
+				db.Create(&textInfo[index])
 			}
-			db.Create(&textInfo[index])
 		}
 
 		sql := `CREATE or replace function get_count() returns numeric

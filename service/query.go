@@ -3,7 +3,10 @@ package service
 import (
 	"errors"
 	"fmt"
+	"github.com/gomodule/redigo/redis"
 	"github.com/jinzhu/gorm"
+	cache "github.com/sm-playground/go-text-poc/cache_client"
+	"github.com/sm-playground/go-text-poc/common"
 	c "github.com/sm-playground/go-text-poc/config"
 	d "github.com/sm-playground/go-text-poc/db"
 	m "github.com/sm-playground/go-text-poc/model"
@@ -35,15 +38,30 @@ type ResolvedPlaceholder struct {
 }
 
 // GetTextInfo returns the list of records from the text_info database in JSON format
-func GetTextInfo(tokens []string, al string) (textInfoList []m.TextInfo) {
+func GetTextInfo(tokens []string, al string) (textInfoList []m.TextInfo, err error) {
+
+	var cacheClient cache.CacheClient
+	if cacheClient, err = cache.GetCacheClient(); err != nil {
+		return nil, err
+	}
+
 	db := d.GetConnection()
 
+	if al == "" {
+		al = c.GetInstance().Get().DefaultLocale
+	}
+
+	// First try to read the data from the cache
+	cacheKey := common.GetServiceOwnerId() + ":" + al + ":" + strings.Join(tokens, "-")
+	textInfoList, err = getCachedTextInfoList(cacheClient, cacheKey)
+	if textInfoList != nil && err == nil {
+		// Found the data in the cache
+		fmt.Printf("Found data in the cache for key - %s\n", cacheKey)
+		return textInfoList, err
+	}
+
+	// The data is not found in the cache. Query it and return
 	if tokens != nil {
-
-		if al == "" {
-			al = "en-US"
-		}
-
 		var values []interface{}
 		query := ""
 
@@ -83,7 +101,13 @@ func GetTextInfo(tokens []string, al string) (textInfoList []m.TextInfo) {
 		db.Find(&textInfoList)
 	}
 
-	return textInfoList
+	// put the list into the wrapper object and cache it
+	var list m.TextInfoList
+	list.SetList(textInfoList)
+	fmt.Printf("\nput the list into the wrapper object and cache it - %s\n", cacheKey)
+	err = cacheClient.Set(cacheKey, list)
+
+	return textInfoList, err
 
 }
 
@@ -92,6 +116,19 @@ func GetTextInfo(tokens []string, al string) (textInfoList []m.TextInfo) {
 // for the given id parameter in JSON format
 func GetSingleTextInfo(params map[string]string) (textInfo m.TextInfo, err error) {
 
+	var cacheClient cache.CacheClient
+	if cacheClient, err = cache.GetCacheClient(); err != nil {
+		return textInfo, err
+	}
+
+	cacheKey := common.GetServiceOwnerId() + ":TEXT_INFO:" + params["id"]
+
+	tiCached, er := getCachedTextInfo(cacheClient, cacheKey)
+	if tiCached != nil && er == nil {
+		fmt.Printf("Found data in the cache for key - %s\n", cacheKey)
+		return tiCached.(m.TextInfo), err
+	}
+
 	db := d.GetConnection()
 
 	if db.First(&textInfo, params["id"]).RecordNotFound() {
@@ -99,6 +136,10 @@ func GetSingleTextInfo(params map[string]string) (textInfo m.TextInfo, err error
 	} else {
 		err = nil
 	}
+
+	fmt.Printf("cache the object - %s\n", cacheKey)
+	err = cacheClient.Set(cacheKey, textInfo)
+
 	return textInfo, err
 }
 
@@ -129,29 +170,11 @@ func ReadData(payload m.TextInfoPayload) (data []m.TokenText, err error) {
 		TargetId:             payload.TargetId,
 		SourceId:             payload.SourceId}
 
-	// sql := ""
-	// var queryValues []interface{}
-
 	for _, token := range payload.Tokens {
 
 		data = append(data, resolveSingleToken(db, token, queryInput)...)
 
-		// singleTokenSql, singleTokenValues := buildSingleTokenQuery(payload.TargetId, language, country, token)
-
-		// @TODO for testing only. Remove this line
-		// db.Raw(singleTokenSql, singleTokenValues...).Scan(&data)
-
-		/*
-			if i == 0 {
-				sql = singleTokenSql
-			} else {
-				sql = sql + " UNION ALL " + singleTokenSql
-			}
-			queryValues = append(queryValues, singleTokenValues...)
-		*/
 	}
-
-	// db.Raw(sql, queryValues...).Scan(&data)
 
 	return data, nil
 
@@ -214,25 +237,53 @@ func getSubquery(queryInput SingleQueryInput, subqueryOrderKey SubqueryOrderKey,
 	return query, subqueryValues
 }
 
+// readFromCache - Tries to read from the cache for the given key
+func readFromCache(cacheClient cache.CacheClient, key string) (data interface{}, err error) {
+
+	if data, err = cacheClient.Get(key); err != nil && err != redis.ErrNil {
+		// Got error while reading data from the cache
+		return nil, err
+	}
+
+	return data, nil
+}
+
 // Returns the collection of TokenText objects.
 //
 // If the token represents a pattern more than a single record might be returned.
 //
 // If no records found the token is returned as a text.
 func resolveSingleToken(db *gorm.DB, tokenInfo m.TokenPayload, queryInput SingleQueryInput) (data []m.TokenText) {
-	var textInfo []m.TextInfo
 
-	var query = ""
-	var queryValues []interface{}
 	token := tokenInfo.Token + "%"
 
+	// First check the data in the cache
+	cacheKey := getReadDataCacheKey(queryInput, token)
+	var cacheClient cache.CacheClient
+	var err error
+	if cacheClient, err = cache.GetCacheClient(); err != nil {
+		return nil
+	}
+	tokenTextList, err := getCachedTokenTextList(cacheClient, cacheKey)
+
+	if tokenTextList != nil && err == nil {
+		// Found the data in the cache
+		fmt.Printf("Found data in the cache for key - %s\n", cacheKey)
+		return tokenTextList
+	}
+
+	// No data in the cache for that key. Query from the database
+	var query = ""
+	var queryValues []interface{}
 	resolvedPlaceholder := resolvePlaceholders(tokenInfo)
 
 	if queryInput.TargetId != "" {
+		// Include customized records if target id is provided
 		query, queryValues = getSubquery(queryInput, Customized, token, resolvedPlaceholder)
 		query += " UNION "
 	}
 
+	// Include localized records
 	s, v := getSubquery(queryInput, Localized, token, resolvedPlaceholder)
 	query += s
 	queryValues = append(queryValues, v...)
@@ -244,12 +295,14 @@ func resolveSingleToken(db *gorm.DB, tokenInfo m.TokenPayload, queryInput Single
 		queryValues = append(queryValues, v...)
 	}
 
+	// Include default fallback records
 	s, v = getSubquery(queryInput, FallbackDefault, token, resolvedPlaceholder)
 	query += " UNION " + s
 	queryValues = append(queryValues, v...)
 
 	query += " ORDER BY orderkey"
 
+	var textInfo []m.TextInfo
 	db.Raw(query, queryValues...).Scan(&textInfo)
 
 	if len(textInfo) == 0 {
@@ -270,6 +323,11 @@ func resolveSingleToken(db *gorm.DB, tokenInfo m.TokenPayload, queryInput Single
 			}
 		}
 	}
+
+	var list m.TokenTextList
+	list.SetList(data)
+	fmt.Printf("\nput the list into the wrapper object and cache it - %s\n", cacheKey)
+	err = cacheClient.Set(cacheKey, list)
 
 	return data
 }
@@ -335,40 +393,4 @@ func resolveLocale(payload m.TextInfoPayload) (language string, country string, 
 	}
 
 	return language, country, nil
-}
-
-// Builds the complete SQL query requesting localized text information for a single token.
-//
-// Returns the SQL query with bind variables and the values in the separate array
-func buildSingleTokenQuery(targetId string, language string, country string, tokenInfo m.TokenPayload) (query string, values []interface{}) {
-
-	sqlSelect := "SELECT token, "
-	sqlWhere := " WHERE target_id = ? AND token LIKE ?"
-	sqlFrom := " FROM text_info"
-
-	var whereValues []interface{}
-
-	whereValues =
-		append(whereValues, targetId, tokenInfo.Token+"%")
-
-	if language != "" {
-		sqlWhere += " AND language = ?"
-		whereValues = append(whereValues, language)
-	}
-	if country != "" {
-		sqlWhere += " AND country = ?"
-		whereValues = append(whereValues, country)
-	}
-
-	resolvedPlaceholder := resolvePlaceholders(tokenInfo)
-
-	sqlSelect += resolvedPlaceholder.SelectField
-	if resolvedPlaceholder.PlaceholderValues != nil {
-		values = append(values, resolvedPlaceholder.PlaceholderValues)
-	}
-	values = append(values, whereValues)
-
-	query = sqlSelect + sqlFrom + sqlWhere
-
-	return query, values
 }

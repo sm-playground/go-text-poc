@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/sm-playground/go-text-poc/db"
 	m "github.com/sm-playground/go-text-poc/model"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -14,7 +15,7 @@ const TEST_SOURCE_ID = "PRT-009"
 
 // TestGetTextInfo verifies the GetTextInfo - a method called on GET request with no parameters
 func TestGetTextInfo(t *testing.T) {
-	textInfoList := GetTextInfo(
+	textInfoList, _ := GetTextInfo(
 		nil,
 		"")
 
@@ -26,7 +27,7 @@ func TestGetTextInfo(t *testing.T) {
 // TestGetTextInfoWithValidToken verifies the GetTextInfo - a method called on GET request with valid token
 func TestGetTextInfoWithValidToken(t *testing.T) {
 	var tokens = []string{"IA.AR.ARINVOICE.EDIT.LABEL"}
-	textInfoList := GetTextInfo(
+	textInfoList, _ := GetTextInfo(
 		tokens,
 		"")
 
@@ -38,7 +39,7 @@ func TestGetTextInfoWithValidToken(t *testing.T) {
 // TestGetTextInfoWithInvalidToken verifies the GetTextInfo - a method called on GET request with INvalid token
 func TestGetTextInfoWithInvalidToken(t *testing.T) {
 	var tokens = []string{"I.AM.AN.INVALID.TOKEN"}
-	textInfoList := GetTextInfo(
+	textInfoList, _ := GetTextInfo(
 		tokens,
 		"")
 
@@ -51,26 +52,33 @@ func TestGetTextInfoWithInvalidToken(t *testing.T) {
 
 // TestGetSingleTextInfo GET with correct input for the record id
 func TestGetSingleTextInfo(t *testing.T) {
+	conn := db.GetConnection()
+	textInfo := m.TextInfo{}
+	conn.First(&textInfo)
+
+	id := textInfo.Id
+
 	params := make(map[string]string)
-	params["id"] = "9"
+	params["id"] = strconv.Itoa(textInfo.Id)
 
 	textInfo, err := GetSingleTextInfo(params)
 	if err != nil {
 		t.Errorf(err.Error())
 	} else {
-		if textInfo.Id == 0 {
+		if textInfo.Id != id {
 			t.Errorf("The record with %s id cannot be found", params["id"])
 		}
 	}
 }
 
 // TestGetSingleTextInfo GET with INcorrect input for the record id
+//noinspection GoNilness
 func TestGetSingleTextInfoInvalidID(t *testing.T) {
 	params := make(map[string]string)
-	params["id"] = "999"
+	params["id"] = "99999"
 
 	textInfo, err := GetSingleTextInfo(params)
-	if err == nil {
+	if err != nil {
 		t.Errorf(err.Error())
 	}
 	if textInfo.Id != 0 {
@@ -91,7 +99,7 @@ func TestReadDataSingleToken(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	var payload m.TextInfoPayload = m.TextInfoPayload{
+	payload := m.TextInfoPayload{
 		SourceId: TEST_SOURCE_ID,
 		TargetId: TEST_TARGET_ID,
 		Locale:   "en-US",
@@ -125,7 +133,7 @@ func TestReadDataMultipleTokens(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	var payload m.TextInfoPayload = m.TextInfoPayload{
+	var payload = m.TextInfoPayload{
 		SourceId: TEST_SOURCE_ID,
 		TargetId: TEST_TARGET_ID,
 		Locale:   "en-US",
@@ -149,6 +157,7 @@ func TestReadDataMultipleTokens(t *testing.T) {
 	)
 }
 
+// TestReadDataParametrizedToken - test for ReadData with parametrized token
 func TestReadDataParametrizedToken(t *testing.T) {
 	token := "PARAMETRIZED.RECORD.IN.ENGLISH"
 	tearDown([]string{"RECORD.TYPE.IN.ARMENIAN", "RECORD.TYPE.IN.ENGLISH",
@@ -161,7 +170,7 @@ func TestReadDataParametrizedToken(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	var textInfo m.TextInfo = m.TextInfo{
+	var textInfo = m.TextInfo{
 		Token:  token,
 		Text:   "The page {PAGE} cannot be {ACTION}",
 		Locale: "en-US",
@@ -172,7 +181,7 @@ func TestReadDataParametrizedToken(t *testing.T) {
 		t.Errorf("Failed creating records for tokenb - %s", token)
 	}
 
-	var payload m.TextInfoPayload = m.TextInfoPayload{
+	var payload = m.TextInfoPayload{
 		SourceId: TEST_SOURCE_ID,
 		TargetId: TEST_TARGET_ID,
 		Locale:   "en-US",
@@ -220,7 +229,7 @@ func tearDown(tokens []string) {
 
 // setup - setup routine
 func setup() error {
-	var textInfo m.TextInfo = m.TextInfo{Token: "RECORD.TYPE.IN.ARMENIAN", Action: "Test"}
+	var textInfo = m.TextInfo{Token: "RECORD.TYPE.IN.ARMENIAN", Action: "Test"}
 	err := createTokenRecords(textInfo, "am-AM")
 	if err != nil {
 		return err

@@ -1,42 +1,86 @@
-# go-text-poc - REST API with Golang, Mux, Postgres (gorm), and Redis with connection pool
+# text-service
+## _POC for Text/Image Service for Localization and Customization_
 
-Demonstrates golang REST API implementation connecting to the Postgres database using gorm (ORM).
+This POC is a cloud-enabled REST API implementation of the text and image service for localization and customization. The POC is implementen in Golang and uses PostgreSql for storage and Redis for caching.
 
-The docker cheat sheet is available here -> https://dockerlabs.collabnix.com/docker/cheatsheet/
+## Prerequisites
+- Golang is installed and properly configured. The detailed steps are available on Go's web site https://golang.org/doc/install
+- PostgreeSql and Redis ara installed and properly configured. Alternatively, the conternerized storage and caching can be used. In that case docker must be installed localy. Follow steps on docker web site for installation https://docs.docker.com/engine/install/. The docker cheat sheet helps with docker command and available here https://dockerlabs.collabnix.com/docker/cheatsheet/
 
-1. Go and Docker are installed and configured.
-2. To create a docker container running an instance of PostgreSql run the command below:  
+#### List of docker containers
+To see the list of running containers run the following command:    
+_docker ps_   
+To see the list of all containers managed by docker run the following command:    
+_docker ps -a_
 
--- This command will create the the postgres container with no data.  
-docker run --rm -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=ia_text --name my-postgres -p 54320:5432 postgres
+##### Creating Postgres container with no data
+_docker run --rm -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=ia_text --name my-postgres -p 54320:5432 postgres_
+##### Creating Postgres container with data preserved locally
+_docker run --rm -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=ia_text --name my-postgres -p 54320:5432 -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data postgres_
 
--- The following command will create a postgres docker container preserving the data locally   
-docker run --rm -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=ia_text --name my-postgres -p 54320:5432 -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data postgres
+The description of attributes of the Docker command
+- --rm (dash dash rm) instucts to remove the container with the data after it exits. If this parameter is NOT provided the data is preserved and the container can be started and stopped by running the _docker start my-postgres_ and _docker stop my-postgres_ commands where my-postgres is the name of the container.   
+- POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB are environment variables specifying parameters of the postgres instance
+- my-postgres is the name of the container
+- -p 54320:5432 - connects the port 5432 inside Docker as port 54320 on the host machine
+- -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data postgres - all the data is stored and kept in local folder $HOME/docker/volumes/postgres
 
-
---rm instucts to remove container after it exists.  
-POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB are environment variables specifying parameters of the postgres instance.  
-my-postgres is the name of the container  
--p 54320:5432 - connects the port 5432 inside Docker as port 54320 on the host machine.   
--v $HOME/docker/volumes/postgres:/var/lib/postgresql/data postgres - all the data is stored and kept in local folder $HOME/docker/volumes/postgres.   
-
-3. Run psql - an interactive terminal to work with the postgres database.  
-docker exec -it my-postgres psql -U postgres. 
-
-4. Useful psql commands:  
+##### Working with the conternerized PostgreSql database
+Run psql - an interactive terminal to work with the postgres database
+_docker exec -it my-postgres psql -U postgres_
+Useful psql commands
 - \t - list all databases
 - \c database-name - switch the database
 - \d \d+ - list of all tables in the database
 - \d \d+ table-name - describe the table
-  
-5. Create a docker container for running Redis image.   
-docker run --name my-redis -p 6379:6379 -d redis. 
- 
-6. To work with the redis cli need to know the container id. The command below will list all running docker containers.   
-docker ps. 
 
-7. Access the container's shell by running the following command and providing the correct container id  
-docker exec -it 103a71bf2cb3 sh
+##### Working with the conternerized Redis in-memory data store
+- Create a docker container for running Redis image  
+_docker run --name my-redis -p 63790:6379 -d redis_
+- To work with the redis cli need to know the container id. The command below will list all running docker containers:   
+_docker ps_
+- Access the container's shell by running the following command and providing the correct container id:  
+_docker exec -it container-id sh_   
+- Once in the shell run the cli tool for redis:  
+_redis-cli_
 
-8. Once in the shell run the cli tool for redis.   
-redis-cli
+##### Downloading the application and the required libraries
+1. Follow this link for GitHub account authentication: https://intacct.atlassian.net/l/c/svu0htk7
+2. The source code of the application can be clonned to the local space by running _git clone git@github.com:Intacct/text-service.git_
+3. The following Go libraries must be dowloaded to the local environment
+```sh
+go get -u github.com/jinzhu/gorm        # Golang ORM
+go get github.com/gorilla/mux           # request router and dispatcher
+go get github.com/urfave/negroni        # midleware library allowing intercepting requests
+go get github.com/spf13/viper           # config files reader (yaml)
+go get github.com/gomodule/redigo/redis # Redis
+go get gopkg.in/alecthomas/kingpin.v2   # Command line and flag parser used by logger  
+```
+
+##### Application configuration
+The application configuration file (config.yaml) is in the root folder of the application. Similar configuration file (config-service.yaml) is located in the /service directory and consumed by the unit tests.
+| Parameter | Value |
+| --------- | ----- |
+| server | web application server(ip) and port |
+| database | PostgreSql database parameters |
+|  | port: PstgreSql running port |
+|  | showqueries: (true/false) instructs to show / hide gorm generated queries |
+| cache | Redis configuration parameters |
+| InitDatabase | (true/false) Instructs to run migration at application reboot |
+| DefaultLocale | locale in the en-US format |
+| ServiceOwnerSourceId | IA used for Intacct |
+
+##### Running the application
+From the root folder of the application where the main.go file is located run command:   
+_go run main.go_
+
+##### Running the tests
+All the tests are located in the /service directory. To show/hide the queries generated by the gorm set the value of the showqueries property in the config-service.yaml file. The following two commands will execute all test from the query_test.go and process_test.go files with and without the details (test names / status and coverage) for each test:    
+_go test -v -coverprofile cp.out_   
+_go test_    
+
+
+
+## License
+**Sage Intacct**
+
