@@ -58,10 +58,14 @@ func CreateTextInfo(textInfo m.TextInfo) (m.TextInfo, error) {
 			Language:             textInfo.Language,
 			TargetId:             textInfo.TargetId,
 			SourceId:             textInfo.SourceId}
-		cacheKey := getReadDataCacheKey(queryInput, textInfo.Token+"%")
-		var cacheClient cache.CacheClient
-		if cacheClient, err = cache.GetCacheClient(); err == nil {
-			_ = cacheClient.Set(cacheKey, textInfo)
+
+		useCache := cnf.GetInstance().Get().Cache.UseCache
+		if useCache {
+			cacheKey := getReadDataCacheKey(queryInput, textInfo.Token+"%")
+			var cacheClient cache.CacheClient
+			if cacheClient, err = cache.GetCacheClient(); err == nil {
+				_ = cacheClient.Set(cacheKey, textInfo)
+			}
 		}
 	}
 

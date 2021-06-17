@@ -43,11 +43,12 @@ type DBConnectionPool struct {
 }
 
 type CacheConfiguration struct {
-	Dialect CacheClientType
-	Network string
-	IP      string
-	Port    int
-	Pool    DBConnectionPool
+	UseCache bool
+	Dialect  CacheClientType
+	Network  string
+	IP       string
+	Port     int
+	Pool     DBConnectionPool
 }
 
 type CacheClientType string

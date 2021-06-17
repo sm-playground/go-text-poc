@@ -82,7 +82,7 @@ func (rc *RedisClient) GetKeys(pattern string) ([]string, error) {
 		}
 	}
 
-	fmt.Printf("keys %+v", keys)
+	// fmt.Printf("keys %+v", keys)
 
 	return keys, nil
 

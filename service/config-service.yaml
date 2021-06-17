@@ -16,6 +16,7 @@ database:
     maxactive: 200
 
 cache:
+  useCache: false
   dialect: "redis"
   network: "tcp"
   ip: "localhost"

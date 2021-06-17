@@ -51,13 +51,16 @@ func GetTextInfo(tokens []string, al string) (textInfoList []m.TextInfo, err err
 		al = c.GetInstance().Get().DefaultLocale
 	}
 
-	// First try to read the data from the cache
 	cacheKey := common.GetServiceOwnerId() + ":" + al + ":" + strings.Join(tokens, "-")
-	textInfoList, err = getCachedTextInfoList(cacheClient, cacheKey)
-	if textInfoList != nil && err == nil {
-		// Found the data in the cache
-		fmt.Printf("Found data in the cache for key - %s\n", cacheKey)
-		return textInfoList, err
+	useCache := c.GetInstance().Get().Cache.UseCache
+	if useCache {
+		// First try to read the data from the cache
+		textInfoList, err = getCachedTextInfoList(cacheClient, cacheKey)
+		if textInfoList != nil && err == nil {
+			// Found the data in the cache
+			fmt.Printf("Found data in the cache for key - %s\n", cacheKey)
+			return textInfoList, err
+		}
 	}
 
 	// The data is not found in the cache. Query it and return
@@ -104,8 +107,10 @@ func GetTextInfo(tokens []string, al string) (textInfoList []m.TextInfo, err err
 	// put the list into the wrapper object and cache it
 	var list m.TextInfoList
 	list.SetList(textInfoList)
-	fmt.Printf("\nput the list into the wrapper object and cache it - %s\n", cacheKey)
-	err = cacheClient.Set(cacheKey, list)
+	if useCache {
+		fmt.Printf("\nput the list into the wrapper object and cache it - %s\n", cacheKey)
+		err = cacheClient.Set(cacheKey, list)
+	}
 
 	return textInfoList, err
 
@@ -122,11 +127,13 @@ func GetSingleTextInfo(params map[string]string) (textInfo m.TextInfo, err error
 	}
 
 	cacheKey := common.GetServiceOwnerId() + ":TEXT_INFO:" + params["id"]
-
-	tiCached, er := getCachedTextInfo(cacheClient, cacheKey)
-	if tiCached != nil && er == nil {
-		fmt.Printf("Found data in the cache for key - %s\n", cacheKey)
-		return tiCached.(m.TextInfo), err
+	useCache := c.GetInstance().Get().Cache.UseCache
+	if useCache {
+		tiCached, er := getCachedTextInfo(cacheClient, cacheKey)
+		if tiCached != nil && er == nil {
+			fmt.Printf("Found data in the cache for key - %s\n", cacheKey)
+			return tiCached.(m.TextInfo), err
+		}
 	}
 
 	db := d.GetConnection()
@@ -137,8 +144,10 @@ func GetSingleTextInfo(params map[string]string) (textInfo m.TextInfo, err error
 		err = nil
 	}
 
-	fmt.Printf("cache the object - %s\n", cacheKey)
-	err = cacheClient.Set(cacheKey, textInfo)
+	if useCache {
+		fmt.Printf("cache the object - %s\n", cacheKey)
+		err = cacheClient.Set(cacheKey, textInfo)
+	}
 
 	return textInfo, err
 }
@@ -257,19 +266,24 @@ func resolveSingleToken(db *gorm.DB, tokenInfo m.TokenPayload, queryInput Single
 
 	token := tokenInfo.Token + "%"
 
-	// First check the data in the cache
-	cacheKey := getReadDataCacheKey(queryInput, token)
 	var cacheClient cache.CacheClient
 	var err error
 	if cacheClient, err = cache.GetCacheClient(); err != nil {
 		return nil
 	}
-	tokenTextList, err := getCachedTokenTextList(cacheClient, cacheKey)
 
-	if tokenTextList != nil && err == nil {
-		// Found the data in the cache
-		fmt.Printf("Found data in the cache for key - %s\n", cacheKey)
-		return tokenTextList
+	cacheKey := getReadDataCacheKey(queryInput, token)
+
+	useCache := c.GetInstance().Get().Cache.UseCache
+	if useCache {
+		// First check the data in the cache
+		tokenTextList, err := getCachedTokenTextList(cacheClient, cacheKey)
+
+		if tokenTextList != nil && err == nil {
+			// Found the data in the cache
+			fmt.Printf("Found data in the cache for key - %s\n", cacheKey)
+			return tokenTextList
+		}
 	}
 
 	// No data in the cache for that key. Query from the database
@@ -326,8 +340,11 @@ func resolveSingleToken(db *gorm.DB, tokenInfo m.TokenPayload, queryInput Single
 
 	var list m.TokenTextList
 	list.SetList(data)
-	fmt.Printf("\nput the list into the wrapper object and cache it - %s\n", cacheKey)
-	err = cacheClient.Set(cacheKey, list)
+
+	if useCache {
+		fmt.Printf("\nput the list into the wrapper object and cache it - %s\n", cacheKey)
+		_ = cacheClient.Set(cacheKey, list)
+	}
 
 	return data
 }

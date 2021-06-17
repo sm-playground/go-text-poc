@@ -78,10 +78,7 @@ func TestGetSingleTextInfoInvalidID(t *testing.T) {
 	params["id"] = "99999"
 
 	textInfo, err := GetSingleTextInfo(params)
-	if err != nil {
-		t.Errorf(err.Error())
-	}
-	if textInfo.Id != 0 {
+	if textInfo.Id != 0 || err.Error() != "The record with id=99999 is not found" {
 		t.Errorf("Found the record with id %s", params["id"])
 	}
 }
