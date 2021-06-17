@@ -3,14 +3,14 @@ package cacheclient
 import (
 	"errors"
 	"fmt"
-	"github.com/prometheus/common/log"
+	"log"
 )
 
 type MemcachedClient struct {
 }
 
 func (rc *MemcachedClient) InitCache() {
-	log.Error("Not implemented")
+	log.Fatal("Not implemented")
 }
 
 func (rc *MemcachedClient) Get(key string) (interface{}, error) {
@@ -27,12 +27,12 @@ func (rc *MemcachedClient) Delete(key string) error {
 
 //noinspection GoUnusedParameter
 func (rc *MemcachedClient) GetKeys(pattern string) ([]string, error) {
-	log.Error("Not implemented")
+	log.Fatal("Not implemented")
 	return nil, nil
 }
 
 //noinspection ALL
 func (rc *MemcachedClient) Invalidate(pattern string) error {
-	log.Error("Not implemented")
+	log.Fatal("Not implemented")
 	return nil
 }
