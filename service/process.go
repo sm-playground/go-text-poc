@@ -28,8 +28,10 @@ func DeleteTextInfo(params map[string]string) (textInfo m.TextInfo, err error) {
 		err = nil
 		db.Delete(&textInfo)
 
-		cacheClient, _ := cache.GetCacheClient()
-		_ = cacheClient.Invalidate("*" + textInfo.Token + "*")
+		if cnf.GetInstance().Get().Cache.UseCache {
+			cacheClient, _ := cache.GetCacheClient()
+			_ = cacheClient.Invalidate("*" + textInfo.Token + "*")
+		}
 
 		requestStatus.Status = "success"
 		requestStatus.Message = fmt.Sprintf("The record with id=%s was deleted", deletedRecordId)

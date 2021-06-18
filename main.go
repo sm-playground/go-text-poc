@@ -5,6 +5,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	cache "github.com/sm-playground/go-text-poc/cache_client"
+	cnf "github.com/sm-playground/go-text-poc/config"
 	"log"
 
 	"github.com/sm-playground/go-text-poc/db"
@@ -16,15 +17,18 @@ var dbClient *gorm.DB
 // main the application entry point
 func main() {
 
-	cacheClient, er := cache.GetCacheClient()
-	if er != nil {
-		panic("failed to connect to in-memory store")
+	useCache := cnf.GetInstance().Get().Cache.UseCache
+	if useCache {
+		cacheClient, er := cache.GetCacheClient()
+		if er != nil {
+			panic("failed to connect to in-memory store")
 
-	} else {
-		if cacheClient.Set("hello", "hello world!!!") == nil {
-			_ = cacheClient.Delete("hello")
 		} else {
-			panic("failed to read from in-memory store")
+			if cacheClient.Set("hello", "hello world!!!") == nil {
+				_ = cacheClient.Delete("hello")
+			} else {
+				panic("failed to read from in-memory store")
+			}
 		}
 	}
 
