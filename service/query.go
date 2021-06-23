@@ -179,10 +179,28 @@ func ReadData(payload m.TextInfoPayload) (data []m.TokenText, err error) {
 		TargetId:             payload.TargetId,
 		SourceId:             payload.SourceId}
 
+	processedTokens := make(map[string]bool)
+
+	// iterate over all tokens in the payload
 	for _, token := range payload.Tokens {
+		dataMap := make(map[string]m.TokenText)
 
-		data = append(data, resolveSingleToken(db, token, queryInput)...)
+		// Resolve the token. The resulting map can contain more than a single token info
+		// For example, resolving IA.AR.ARINVOICE.LABEL.AMOUNT returns info for
+		// - IA.AR.ARINVOICE.LABEL.AMOUNT_RETAINED
+		// - IA.AR.ARINVOICE.LABEL.AMOUNT_RELEASED
+		// - IA.AR.ARINVOICE.LABEL.AMOUNT_PAID
+		_, dataMap = resolveSingleToken(db, token, queryInput)
 
+		// Iterate over each resolved token (the derivatives of the original) and check in the list
+		// of the processed tokens to consider each just once
+		for key, element := range dataMap {
+
+			if _, ok := processedTokens[key]; !ok {
+				processedTokens[key] = true
+				data = append(data, element)
+			}
+		}
 	}
 
 	return data, nil
@@ -262,14 +280,16 @@ func readFromCache(cacheClient cache.CacheClient, key string) (data interface{},
 // If the token represents a pattern more than a single record might be returned.
 //
 // If no records found the token is returned as a text.
-func resolveSingleToken(db *gorm.DB, tokenInfo m.TokenPayload, queryInput SingleQueryInput) (data []m.TokenText) {
+func resolveSingleToken(db *gorm.DB, tokenInfo m.TokenPayload, queryInput SingleQueryInput) (data []m.TokenText, dataMap map[string]m.TokenText) {
+
+	dataMap = make(map[string]m.TokenText)
 
 	token := tokenInfo.Token + "%"
 
 	var cacheClient cache.CacheClient
 	var err error
 	if cacheClient, err = cache.GetCacheClient(); err != nil {
-		return nil
+		return nil, nil
 	}
 
 	cacheKey := getReadDataCacheKey(queryInput, token)
@@ -282,7 +302,10 @@ func resolveSingleToken(db *gorm.DB, tokenInfo m.TokenPayload, queryInput Single
 		if tokenTextList != nil && err == nil {
 			// Found the data in the cache
 			fmt.Printf("Found data in the cache for key - %s\n", cacheKey)
-			return tokenTextList
+			for _, record := range tokenTextList {
+				dataMap[record.Token] = m.TokenText{Text: record.Text, Token: record.Token}
+			}
+			return tokenTextList, dataMap
 		}
 	}
 
@@ -314,13 +337,14 @@ func resolveSingleToken(db *gorm.DB, tokenInfo m.TokenPayload, queryInput Single
 	query += " UNION " + s
 	queryValues = append(queryValues, v...)
 
-	query += " ORDER BY orderkey"
+	query += " ORDER BY token, orderkey"
 
 	var textInfo []m.TextInfo
 	db.Raw(query, queryValues...).Scan(&textInfo)
 
 	if len(textInfo) == 0 {
 		// No record is found for the given token. Return the token
+		dataMap[tokenInfo.Token] = m.TokenText{Text: tokenInfo.Token, Token: tokenInfo.Token}
 		data = append(data, m.TokenText{Text: tokenInfo.Token, Token: tokenInfo.Token})
 	} else {
 		var pt = ""
@@ -331,6 +355,7 @@ func resolveSingleToken(db *gorm.DB, tokenInfo m.TokenPayload, queryInput Single
 				// If the token has more than one record they are ordered as customized - localized - fallback
 				// take the first one and ignore the rest
 				// fmt.Printf("\n%+v", record)
+				dataMap[record.Token] = m.TokenText{Text: record.Text, Token: record.Token}
 				data = append(data, m.TokenText{Text: record.Text, Token: record.Token})
 			} else {
 				continue
@@ -346,7 +371,7 @@ func resolveSingleToken(db *gorm.DB, tokenInfo m.TokenPayload, queryInput Single
 		_ = cacheClient.Set(cacheKey, list)
 	}
 
-	return data
+	return data, dataMap
 }
 
 // resolvePlaceholders returns the ResolvedPlaceholder structure with queried field (optionally, with formula)
